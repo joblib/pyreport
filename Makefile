@@ -14,6 +14,9 @@ release:
 	cp pyreport /home/varoquau/www/src/computers/pyreport
 	make install
 
+push:
+	bzr push sftp://1and1/pyreport
+
 web:
 	cp index.txt /home/varoquau/www/src/computers/pyreport
 	cd /home/varoquau/www && make && make install
