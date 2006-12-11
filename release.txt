@@ -1,0 +1,131 @@
+restindex
+    page-title: pyreport download 
+    crumb: pyreport
+    link-title: pyreport download
+    page-description:
+        An utility to generate report from python scripts
+    /description
+    file: pyreport
+/restindex
+
+uservalues
+    page_keywords: pyreport python literate programming pylab scipy numpy literal
+/uservalues
+
+============================================
+ download `pyreport`
+============================================
+
+.. sidebar:: Downloads :
+    :class: leftsidebar   
+    
+    .. include:: /home/varoquau/www/src/computers/pyreport/download.rst
+    
+    * `pyreport 0.1.8 <./pyreport>`_
+    
+
+News
+====
+
+Pyreport can output moinmoin syntax !!
+
+Pyreport can output html ! try it out !! Now that pyreport doesn't rely
+anymore on LaTeX, I need people to try and run it on windows and help me
+make it windows friendly.
+
+Installing
+===========
+
+Currently `pyreport` is nothing but a python script (it can also be used as a
+module). On Unices it should just be made executable and go in a
+directory in the PATH (or have a link in a directory in the PATH). I am
+wait for advice on how to use it under windows.
+
+To use `pyreport` just call it with the name of the script you want to
+compile to a report. For example ``pyreport myscript.py``. `pyreport`
+will generate a pdf (or a html, if it cannot find LaTeX) called
+`myscript.pdf`. See the command line switches for more info.
+
+Release notes
+==============
+
+`pyreport` 0.2.7
+-----------------
+
+Started unit-testing pyreport. This has forced my to move around its
+internals a lot. It is moving away from the sript approach to the module
+approach. The code is much cleaner and I think I busted a few minor bugs.
+Only minor features added. More features will come when I am satisfied
+with the "big design"...
+
+`pyreport` 0.2.6
+-----------------
+
+This is just a code clean-up.
+
+`pyreport` 0.2.5
+-----------------
+
+Improved the functions to use pyreport as a module rather than a script
+(the function "main" which should be used by external code calling
+pyreport) can now take a StringIO object, and can return a string of the
+compiled report.
+
+Also added the ability to use pyreport with pipes, both input and output.
+I Hacked a lot today. God knows how many bugs my sleep deprived brain has
+slipped in the code :->. Please report them !!
+
+`pyreport` 0.2.4
+-----------------
+
+I spent some time consolidating pyreport, especially its command line
+switches. I am trying to make it windows ready but I definitely need help
+and advice on how to package it for windows.
+
+`pyreport` 0.2.3
+-----------------
+
+First go at outputing moinmoin syntax. This should be useful for the
+scipy.org website. Please test the moin-moin synthax, and report thebugs
+or improvements needed to the moin-moin output driver, as I do not know
+moin moin very well
+
+`pyreport` 0.2.2
+-----------------
+
+Add a special type of comment: line starting by "#pyreport" are now
+processed as command line switches. For instance if you have in your
+script a line "#pyreport -d", the document will be compiled in double
+page. This overrides the command line switches. This is still
+experimental !
+
+`pyreport` 0.2.1
+-----------------
+
+Made the inline latex escape green by default, as it usually appears in
+comments.
+
+`pyreport` 0.2.0
+-----------------
+
+Extensive refactoring of the code, features have been added, probavly new
+bug too !
+
+The processing code has been change to allow for mixing code indented
+blocks and literate comments.
+
+The output code has been change to have an interchangeable backend
+compiler allowing for outputing to different filetypes.
+
+First version of the html output driver !
+
+`pyreport` 0.1.8
+-----------------
+
+Last version of the first code base. A lot of bugs have been hunted
+thanks to Otto Tronarp and Robert Cimrman.
+
+David Grant suggested a way to overload the pylab.show call in a
+cleaner way. This will now also work in the code imported from the
+script being executed from pyreport.
+

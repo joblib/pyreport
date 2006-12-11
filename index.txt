@@ -1,0 +1,214 @@
+restindex
+    page-title: pyreport: generate reports out of python scripts 
+    crumb: pyreport
+    link-title: pyreport
+    page-description:
+	An utility to generate report from python scripts
+    /description
+    file: simple.png
+    file: pylab.png
+    file: latex.png
+    file: example.python
+    file: example.pdf
+    file: example.html
+    file: example_pyreport_0.png
+    file: example_pyreport_1.png
+    file: example2.python
+    file: example2.pdf
+    file: example2.html
+    file: example2_pyreport_0.png
+    file: example2_pyreport_1.png
+    file: example2_pyreport_2.png
+/restindex
+
+uservalues
+    page_keywords: pyreport python literate programming pylab scipy numpy literal
+/uservalues
+
+============================================
+ `pyreport`: literate programming in python
+============================================
+
+.. sidebar:: Downloads :
+    :class: leftsidebar
+
+    .. include:: /home/varoquau/www/src/computers/pyreport/latest.rst
+ 
+
+
+`pyreport` is a program that runs a python script and captures its
+output, compiling it to a pretty report in a pdf or an html file. It can
+display the output embedded in the code that produced it and can process
+special comments (literate comments) according to markup languages (
+`rst`_ or `LaTeX`_ ) to compile a very readable document. 
+
+This allows for extensive literate progamming [#]_ in python, for generating
+reports out of calculations written in python, and for making nice
+tutorials.
+
+.. warning::
+
+  `pyreport` is very young and is likely to change a lot, including in
+  its syntax and calls. Do not hesitate to report any bug or feature
+  requests. However I am a experimental physicist and not an IT
+  professional, and do not have to much time to spend on this project.
+
+
+.. contents::
+
+Requirements
+---------------
+
+`pyreport` is of course written in python, and needs the python
+interpreter to run.
+
+* External programs (under windows make sure they are in the path,
+  elsewhere `pyreport` cannot find them):
+
+  * `pyreport` does not need any external programs to generate html
+    files.
+
+  * LaTeX : currently `pyreport` calls LaTeX to generate pdf files.
+    Hopefully one day this will be optional and `pyreport` will use
+    reportlabs to output pdf files.
+
+  * epstopdf or ps2pdf if you want to use pylab to insert graphs in your
+    documents. Once `matplotlib`_ has a pdf backend this will not be
+    needed.
+
+* Python packages:
+
+  * docutils only, so far
+
+Examples and use cases
+------------------------
+
+Initial goals
+===============================
+
+I use python to write small scripts that can do, for instance, numerical
+calculations, or simple operations [#]_ and I want to have nice
+print-outs of these scripts to study off-screen or to hand out to
+colleagues. Having the code with its relevant output is great for code
+reviewing. This also allows something similar to mathematica's notebook
+in python without having to use a special IDE.
+
+ * First I want to be able to have a print-out of these calculations
+   where I can see the code ran, and the results produced:
+
+   .. image:: simple.png
+     :align: center
+     :target: simple.png
+     :alt: The ouput of a session.
+
+--------------------------------------------------
+
+
+ * Second I would like all the plots produced by `matplotlib`_ to be
+   captured and displayed too.
+
+   .. image:: pylab.png
+     :align: center
+     :target: pylab.png
+     :alt: The "show()" command gets overloaded.
+
+--------------------------------------------------
+
+ * Last I would be able to comment these reports, give them titles,
+   sections, ... This can be done via "literate programming": comment
+   lines begin with a special sets of characters are interpreted as
+   `rst`_ or `LaTeX`_. I also want these files to still be standard
+   python files, and to be able to run them with the python interpreter.
+
+    {colorize;/home/varoquau/www/src/computers/pyreport/latex.py}
+
+   .. image:: latex.png
+     :align: center
+     :target: latex.png
+     :alt: A python report with a title and a LaTeX formula.
+
+Other possible uses
+======================
+
+ * Hidding the source code allows to generate nice reports from
+   calculation scripts without worrying about writing document generating
+   code in the script itself. The use of the literal comments and `print`
+   statements allow your report to be well structured and
+   self-explaining. The major advantage of having the text of the report
+   in the source of the calulation is that the report always discribes
+   the calculation that was actually ran, and not a previous one, with
+   incorrect constants, for instance.
+
+ * With a moin-moin syntax and a pdf output this can be a very useful
+   tool for writing tutorials and putting them on scipy.org, with a pdf
+   version.
+
+Examples
+=========================
+
+Here are two examples showing what you can do with `pyreport` :
+
+  * A calculation of the bifurcation diagram of the logistic mapping
+
+    `The code <./example2.python>`__ , the `pdf generated
+    <./example2.pdf>`__ , and the `html file generated <./example2.html>`__
+
+  * An exploration of the Julia sets, this example uses a LaTeX equation :
+
+    `The code <./example.python>`__ , the `pdf generated
+    <./example.pdf>`__ , and the `html file generated <./example.html>`__
+
+Limitations
+=========================
+
+This section could also be called "known bugs", but I do not like such a
+name :->.
+
+The "sys" module is imported in your code, whether you want it or not. As
+a general rule, beware of the namespace when running your scripts with
+`pyreport`, `pyreport` injects a few variables in your namespace.
+
+`from __future__ import foobar` in a script does not work ! This a a big
+caveat ! This is simply not possible in python, as the `from __future__`
+imports have to be the first statement of a script.
+
+As a consequence I have made the decision to always import `division`, so
+that 2/3 = 0.6666.
+
+Some stange bugs can occur depending on the backend you use for
+matplotlib. WXAgg has played me a few tricks.
+
+Up to release 0.2 putting literate comments in the middle of indented
+blocks will not work (the execution of the script will fail).
+
+Command line switches
+----------------------
+
+This is not as useful as a well written documentation, but it is better
+than nothing:
+
+.. highlights::
+
+  {include;/home/varoquau/www/src/computers/pyreport/help.rst;True}
+ 
+---------------------------------------------------
+
+.. [#] `literate programming
+    <http://en.wikipedia.org/wiki/Literate_programming>`_ is a programming style
+    that embeds the documentation of a program in its source code. The
+    documentation is generated in the same time that the program is
+    built. I am using the term in a very loose way, as `pyreport` is
+    capable of literate programming, but also of much more, as it embeds
+    the documentation, but also weaves the output of the script in the
+    documentation.
+
+.. [#] `scipy`_  provides a very powerful math package to python, and
+   `matplotlib`_ is a great plotting interface.
+
+.. _`scipy` : http://scipy.org/
+
+.. _`matplotlib` : http://matplotlib.sourceforge.net/
+
+.. _`rst` : http://docutils.sourceforge.net/rst.html
+
+.. _`LaTeX` : http://www.latex-project.org/
