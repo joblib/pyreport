@@ -3,11 +3,9 @@
 Tool that takes python script and runs it. Returns the results and special
 comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 """
-
-from __future__ import division
-# Copyright: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-# License: LGPL
-
+# Author: Gael Varoquaux  <gael dot varoquaux at normalesup dot org>
+# Copyright (c) 2005 Gael Varoquaux
+# License: BSD Style
 
 #TODO: - Write unit tests
 #      - Bug in the HTML pretty printer ? Line returns seem to big.
@@ -22,6 +20,7 @@ from __future__ import division
 #      - some output to make man pages ?
 #      - Long, long term: use reportlab to avoid the dependencies on
 #          LaTeX
+from __future__ import division
 
 DEBUG = True
 __revision__ = "$Revision: $"
@@ -61,6 +60,7 @@ allowed_types = {
         "html": ("png", "jpg") ,
         "rst" : ("png", "pdf", "ps", "jpg"), 
         "moin": ("png", "jpg") ,
+        "trac" : ("png", "pdf", "ps", "jpg"), 
 }
 
 # Find out what output type we can provide (do we have latex ? epstopdf ?)
@@ -257,13 +257,16 @@ def open_outfile(options):
 
 #---------------------------- Subroutines ------------------------------------
 if DEBUG:
+    try:
+        os.mkdir("DEBUG")
+    except OSError:
+        pass
     def DEBUGwrite(variable, filename):
         """ If DEBUG is enabled, writes variable to the file given by "filename"
         """
-        if DEBUG:
-            debug_file = open(filename,'w')
-            debug_file.write(variable.__repr__())
-            debug_file.close()
+        debug_file = open("DEBUG" + os.sep + filename,'w')
+        debug_file.write(variable.__repr__())
+        debug_file.close()
 else:
     def DEBUGwrite(variable, filename):
         pass
@@ -883,7 +886,8 @@ class ReportCompiler(object):
         the final document from the output block list
     """
 
-    preamble = ".. header:: Compiled with pyreport\n"
+    #preamble = ".. header:: Compiled with pyreport\n"
+    preamble = ""
    
     inputBlocktpl = r"""
 ::
@@ -948,7 +952,7 @@ class ReportCompiler(object):
         # It self, just name the attributes and methods well
         if block[0] == "inputBlock":
             if callable(self.inputBlocktpl):
-                rst_text = self.inputBlocktpl(self, block[1], block[2])
+                rst_text = self.inputBlocktpl(block[1], block[2])
             else:
                 data = {'linenumber' : block[2],
                         'textBlock' : self.add_indent(block[1]),
@@ -987,6 +991,19 @@ class ReportCompiler(object):
         """ Compiles the output_list to the rst file given the filename"""
         rst_string = self.preamble + self.blocks2rst_string(output_list)
         print >>fileobject, rst_string
+
+class TracCompiler(ReportCompiler):
+    def inputBlocktpl(self, pythonstring, startlinnum):
+        if re.search(r'\S', pythonstring):
+            return r"""
+    .. code-block:: python
+
+        %s
+
+""" % pythonstring.replace("\n","\n        ")
+        else:
+            return "\n"
+
 
 class MoinCompiler(ReportCompiler):
     figuretpl = r"""
@@ -1296,6 +1313,7 @@ compilers = {
     'html': HtmlCompiler,
     'rst' : ReportCompiler,
     'moin': MoinCompiler,
+    'trac': TracCompiler,
 }
 
 #------------------------------- Entry point ---------------------------------

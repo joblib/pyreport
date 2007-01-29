@@ -27,6 +27,15 @@ uservalues
 News
 ====
 
+pyreport is now under a BSD license !
+
+I have switched from svn to bzr, and have opened a launchpad account for
+pyreport: `https://launchpad.net/products/pyreport
+<https://launchpad.net/products/pyreport>`_. You can now get the
+developement version and hack on pyreport.
+
+Pyreport can output trac syntax
+
 Pyreport can output moinmoin syntax !!
 
 Pyreport can output html ! try it out !! Now that pyreport doesn't rely

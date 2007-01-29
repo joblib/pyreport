@@ -3,7 +3,7 @@ restindex
     crumb: pyreport
     link-title: pyreport
     page-description:
-	An utility to generate report from python scripts
+	This is an utility I wrote to generate report from python scripts. I use this a lot to print out nice pdfs from the calculations I make using python. It is great for interacting with colleagues and keeping track of my work.
     /description
     file: simple.png
     file: pylab.png
@@ -23,6 +23,8 @@ restindex
 
 uservalues
     page_keywords: pyreport python literate programming pylab scipy numpy literal
+    sorttag: python10
+    subject_tag: python
 /uservalues
 
 ============================================
@@ -45,6 +47,9 @@ special comments (literate comments) according to markup languages (
 This allows for extensive literate progamming [#]_ in python, for generating
 reports out of calculations written in python, and for making nice
 tutorials.
+
+**License** `pyreport` is free software released under a BSD-like
+license.
 
 .. warning::
 
