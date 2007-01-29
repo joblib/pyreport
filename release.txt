@@ -21,7 +21,9 @@ uservalues
     
     .. include:: /home/varoquau/www/src/computers/pyreport/download.rst
     
-    * `pyreport 0.1.8 <./pyreport>`_
+    * `pyreport 0.2.5 <./pyreport-0.2.5>`_
+    
+    * `pyreport 0.1.8 <./pyreport-0.1.8>`_
     
 
 News
@@ -57,6 +59,12 @@ will generate a pdf (or a html, if it cannot find LaTeX) called
 
 Release notes
 ==============
+
+`pyreport` 0.2.8
+-----------------
+
+This is just a maintenance release. I have modified tiny bits of pyreport
+as I have used it over the last few months. Nothing much, though.
 
 `pyreport` 0.2.7
 -----------------

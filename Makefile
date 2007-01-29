@@ -13,6 +13,7 @@ install: all
 release:
 	cp pyreport /home/varoquau/www/src/computers/pyreport
 	make install
+	make export
 
 push:
 	bzr push sftp://1and1/pyreport
