@@ -24,7 +24,7 @@ from __future__ import division
 
 DEBUG = False
 __revision__ = "$Revision: $"
-__version__ = "0.2.8"
+__version__ = "0.2.9"
 
 #---------------------------- Imports ----------------------------------------
 # To deal with stderr 
@@ -51,10 +51,15 @@ if os.name == "posix":
 else:
     def silent_execute( string):
         """ Execute the given shell adding > /dev/null if under a posix OS and 
-        > nul under windows ( scew microsoft !)"""
+        > nul under windows ( screw microsoft !)"""
         return os.system(string + " > nul")
 
-# A dictionary describing the supported output type (as the keys of the 
+def verbose_execute(string):
+    """ Execute getting errors """
+    if os.system(string) != 0:
+        raise RuntimeError('Unable to execute %r'%string)
+
+# A dictionary describing the supported output type (as the keys of the
 # dictionnary) and the figure type allowed for each.
 allowed_types = {
         "html": ("png", "jpg") ,
@@ -65,18 +70,23 @@ allowed_types = {
 
 # Find out what output type we can provide (do we have latex ? epstopdf ?)
 # FIXME: Have a look at mpl to see how they do this.
-if not silent_execute("latex -v"):
+if not silent_execute("latex --help"):
     allowed_types.update({
         "tex" : ("eps","ps"),
         "dvi" : ("eps",),
         "ps"  : ("eps",),
         "eps" : ("eps",),
     })
-    if silent_execute("epstopdf --help"):
+    if not silent_execute("epstopdf --help"):
         allowed_types.update({
             "pdf" : ("pdf",),
             "tex" : ("pdf", "eps","ps"),
         })
+
+if not silent_execute("pdflatex --help"):
+    HAVE_PDFLATEX = True
+else:
+    HAVE_PDFLATEX = False
 
 # Build a parser object
 from optparse import OptionParser as _OptionParser
@@ -199,8 +209,10 @@ def guess_names_and_types(options, allowed_types=allowed_types):
     # stdout
     if options.infilename == "-" and not options.outfilename :
         options.outfilename = "-"
-    
-    # If we are outputing to a stream rather than a file not every output 
+    if not options.infilename == "-" and hasattr(options.infilename, "startswith"):
+        options.infilename = os.path.abspath(options.infilename).replace(os.sep, '/')
+        os.chdir(os.path.dirname(options.infilename))
+    # If we are outputing to a stream rather than a file not every output
     # type is allowed
     if options.outfilename == "-" or options.outfile:
         for extension in set(("pdf", "ps", "eps", "dvi")):
@@ -497,7 +509,7 @@ class PylabShow(object):
     def _set_options(self,options):
         if not options.outfilename in set(("-", None)):
             self.basename =  "%s_pyreport_" % os.path.splitext(
-                        options.infilename)[0]
+                        os.path.basename(options.infilename))[0]
         else:
             self.basename =  "_pyreport_"
         if options.figuretype == "pdf":
@@ -806,30 +818,43 @@ def protect(string):
     '''
     return re.sub(r"\\", r"\\\\", string)
 
+def safe_unlink(filename):
+    """ Remove a file from the disk only if it exists, if not r=fails silently
+    """
+    if os.path.exists(filename):
+        os.unlink(filename)
+
 def tex2pdf(filename, options):
     """ Compiles a TeX file with pdfLaTeX (or LaTeX, if or dvi ps requested)
         and cleans up the mess afterwards
     """
     if options.verbose:
-        execute = lambda string : os.system(string)
+        execute = verbose_execute
     else:
         execute = silent_execute
     if not options.quiet :
         print >> sys.stderr, "Compiling document to "+options.outtype
     if options.outtype == "ps":
-        execute("latex --interaction scrollmode %s.tex " % filename)
+        execute("latex --interaction scrollmode %s.tex -output-directory=%s" %(filename, os.path.dirname(filename)))
         execute("dvips %s.dvi -o %s.ps" % (filename, filename) )
     elif options.outtype == "dvi":
         execute("latex --interaction scrollmode %s.tex " % filename)
     elif options.outtype == "eps":
-        execute("latex --interaction scrollmode %s.tex " % filename)
+        execute("latex --interaction scrollmode %s.tex -output-directory=%s" %(filename, os.path.dirname(filename)))
         execute("dvips -E %s.dvi -o %s.eps" % (filename, filename))
-    else:
-        execute( "pdflatex --interaction scrollmode %s.tex" % filename)
-    os.unlink(filename+".tex")
-    os.unlink(filename+".log")
-    os.unlink(filename+".aux")
-    os.unlink(filename+".out")
+    elif options.outtype == "pdf":
+        if HAVE_PDFLATEX:
+            execute( "pdflatex --interaction scrollmode %s.tex -output-directory=%s" %(filename, os.path.dirname(filename)))
+        else:
+            execute("latex --interaction scrollmode %s.tex -output-directory=%s" %(filename, os.path.dirname(filename)))
+            execute("dvips -E %s.dvi -o %s.eps" % (filename, filename))
+            print "Doing pdf %s" % filename
+            execute("epstopdf %s.eps" % filename)
+
+    safe_unlink(filename+".tex")
+    safe_unlink(filename+".log")
+    safe_unlink(filename+".aux")
+    safe_unlink(filename+".out")
 
 def epstopdf(figure_name):
     """ Converts eps file generated by the script to a pdf file, using epstopdf
@@ -837,7 +862,7 @@ def epstopdf(figure_name):
     """
     os.environ['GS_OPTIONS'] = "-dUseFlatCompression=true -dPDFSETTINGS=/prepress -sColorImageFilter=FlateEncode -sGrayImageFilter=FlateEncode -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dEncodeColorImages=false -dEncodeGrayImages=false -dEncodeMonoImages=false"
     os.system("epstopdf --nocompress " + figure_name)
-    os.unlink(figure_name)
+    #safe_unlink(figure_name)
     return (os.path.splitext(figure_name)[0]+".pdf")
 
 def rst2latex(rst_string):
@@ -889,8 +914,8 @@ class ReportCompiler(object):
         the final document from the output block list
     """
 
-    #preamble = ".. header:: Compiled with pyreport\n"
-    preamble = ""
+    preamble = ".. header:: Compiled with pyreport\n"
+    #preamble = ""
    
     inputBlocktpl = r"""
 ::
@@ -1308,7 +1333,7 @@ class TexCompiler(ReportCompiler):
         self.compile2tex( output_list, fileobject, options)
         fileobject.close()
         tex2pdf(options.outfilename, options)
-        map(os.unlink, self.figure_list)
+        map(safe_unlink, self.figure_list)
         self.figure_list = ()
 
 

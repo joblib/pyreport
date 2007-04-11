@@ -21,11 +21,17 @@ uservalues
     
     .. include:: /home/varoquau/www/src/computers/pyreport/download.rst
     
+    * `pyreport 0.2.8 <./pyreport-0.2.8>`_
+
     * `pyreport 0.1.8 <./pyreport-0.1.8>`_
     
 
 News
 ====
+
+Thanks to Tom Denniston I know have some testing under windows. I made a
+few changes that he suggested to get pyreport working better under
+windows with MikTeX.
 
 pyreport is now under a BSD license !
 
@@ -57,6 +63,13 @@ will generate a pdf (or a html, if it cannot find LaTeX) called
 
 Release notes
 ==============
+
+`pyreport` 0.2.9
+----------------
+
+A few modification to make `pyreport` more windows-friendly. This release
+was made a bit in a hurry, but it passes the tests. I hope I haven't
+broken anything.
 
 `pyreport` 0.2.8
 -----------------
