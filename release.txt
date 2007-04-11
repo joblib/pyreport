@@ -21,8 +21,6 @@ uservalues
     
     .. include:: /home/varoquau/www/src/computers/pyreport/download.rst
     
-    * `pyreport 0.2.5 <./pyreport-0.2.5>`_
-    
     * `pyreport 0.1.8 <./pyreport-0.1.8>`_
     
 
