@@ -10,6 +10,7 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 #TODO: - Write unit tests
 #      - Bug in the HTML pretty printer ? Line returns seem to big.
 #      - Proper documentation
+#      - Rework to API to allow better use from external programs
 #      - Process some strings as literal-comments:
 #               Strings starting a new line
 #               Need an option to enable this
@@ -22,9 +23,9 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 #          LaTeX
 from __future__ import division
 
-DEBUG = False
+DEBUG = True
 __revision__ = "$Revision: $"
-__version__ = "0.2.9"
+__version__ = "0.2.10"
 
 #---------------------------- Imports ----------------------------------------
 # To deal with stderr 
@@ -77,7 +78,8 @@ if not silent_execute("latex --help"):
         "ps"  : ("eps",),
         "eps" : ("eps",),
     })
-    if not silent_execute("epstopdf --help"):
+    # Why the hell does epstopdf return 65280 !!
+    if  silent_execute("epstopdf --help") in (0, 65280):
         allowed_types.update({
             "pdf" : ("pdf",),
             "tex" : ("pdf", "eps","ps"),
@@ -326,7 +328,7 @@ def code2blocks(file_object, options):
             startlinenum = tokendesc[2][0] + 1
         elif ( numopenbrakets == 0 
                 and numopencurlybrakets == 0 
-                and numopenpar==0 
+                and numopenpar == 0 
                 and ( tokentype == 'NEWLINE' or tokentype == 'ENDMARKER' )
                 ): 
             current_block += tokencontent
