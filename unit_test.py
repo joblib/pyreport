@@ -46,8 +46,13 @@ load_test(TestCondenser)
 
 class TestParser(unittest.TestCase):
 
-    def setUp(self):
-        self.testfile = cStringIO.StringIO("""
+    def test_code2blocks_empty(self):
+        # First with an empty file: 
+        self.assertEqual( pyreport.code2blocks(cStringIO.StringIO(), 
+                                    pyreport.default_options), ([["", 1]], {}))
+
+    def test_code2blocks_1(self):
+        testfile = cStringIO.StringIO("""
 if 1:
     print "a"
     # foo
@@ -57,14 +62,24 @@ if 1:
     print "b"
 """) 
 
-    def test_code2blocks(self):
-        # First with an empty file: 
-        self.assertEqual( pyreport.code2blocks(cStringIO.StringIO(), 
-                                    pyreport.default_options), ([["", 1]], {}))
-        self.assertEqual( pyreport.code2blocks(self.testfile, 
-            pyreport.default_options),
+        self.assertEqual( pyreport.code2blocks(testfile, 
+            pyreport.default_options), 
             ([['\nif 1:\n    print "a"\n    # foo\n\n# foo\n\n    print "b"\n',
             1]], {} ))
+
+    def test_code2blocks_2(self):
+        testfile = cStringIO.StringIO("""print 1
+print 2
+
+# 
+
+print 3
+""") 
+
+        self.assertEqual( pyreport.code2blocks(testfile, 
+            pyreport.default_options), ([['print 1\n', 1], ['print 2\n\n# \n\n',
+            2], ['print 3\n', 6]], {})
+            )
 
 load_test(TestParser)
 

@@ -295,52 +295,62 @@ def code2blocks(file_object, options):
     startlinenum = 1
     linenum = 0
     pos = 0
+    previous_tok_type = ""
     numopenbrakets = 0
     numopencurlybrakets = 0
     numopenpar = 0
-    for tokendesc in tokenize.generate_tokens(file_object.readline):
-        tokentype = token.tok_name[tokendesc[0]]
-        startpos = tokendesc[2][1]
-        tokeninitial = tokendesc[1]
-        tokencontent = tokendesc[1]
-        if tokendesc[2][0] > linenum:
+    tokens = ( (token.tok_name[tokendesc[0]], 
+                        tokendesc[2][1],
+                        tokendesc[1],
+                        tokendesc[2][0] )
+               for tokendesc in tokenize.generate_tokens(file_object.readline)
+             )
+    for (tok_type, tok_startpos, tok_content, tok_linenum) in tokens:
+        tok_initial_str = tok_content 
+        if tok_linenum > linenum:
             # We just started a new line
-            tokencontent = startpos * " " + tokencontent
-        elif startpos > pos :
-            tokencontent = (startpos - pos) * " " + tokencontent
-        pos = startpos + len(tokendesc[1])
-        linenum = tokendesc[2][0]
-        if tokentype == 'OP':
-            if tokeninitial == "{": numopencurlybrakets += 1
-            elif tokeninitial == "}": numopencurlybrakets += -1
-            elif tokeninitial == "[": numopenbrakets += 1
-            elif tokeninitial == "]": numopenbrakets += -1
-            elif tokeninitial == "(": numopenpar += 1
-            elif tokeninitial == ")": numopenpar += -1
-        if tokentype == "COMMENT" and current_block == "" and len(block_list)>0:
+            tok_content = tok_startpos * " " + tok_content
+        elif tok_startpos > pos :
+            tok_content = (tok_startpos - pos) * " " + tok_content
+        pos = tok_startpos + len(tok_initial_str)
+        linenum = tok_linenum
+        if tok_type == 'OP':
+            if   tok_initial_str == "{": numopencurlybrakets += 1
+            elif tok_initial_str == "}": numopencurlybrakets += -1
+            elif tok_initial_str == "[": numopenbrakets += 1
+            elif tok_initial_str == "]": numopenbrakets += -1
+            elif tok_initial_str == "(": numopenpar += 1
+            elif tok_initial_str == ")": numopenpar += -1
+        if tok_type == "COMMENT" and current_block == "" and len(block_list)>0:
             # Check to see if this is an option line
-            for line in tokencontent.split("\n"):
+            for line in tok_content.split("\n"):
                 if line[:10] == "#pyreport " and not options.nopyreport:
                     new_options.update_loose(
                         parse_options(line[10:].split(" "))[0])
-            block_list[-1][0] += tokencontent
+            block_list[-1][0] += tok_content
             pos = 0
-            startlinenum = tokendesc[2][0] + 1
-        elif ( numopenbrakets == 0 
-                and numopencurlybrakets == 0 
-                and numopenpar == 0 
-                and ( tokentype == 'NEWLINE' or tokentype == 'ENDMARKER' )
-                ): 
-            current_block += tokencontent
+            startlinenum = tok_linenum + 1
+        elif ( ( tok_type == 'NL' and previous_tok_type == 'COMMENT' ) 
+             or
+               ( numopenbrakets == 0 
+                 and numopencurlybrakets == 0 
+                 and numopenpar == 0 
+                 and ( tok_type == 'NEWLINE' or tok_type == 'ENDMARKER' )
+                ) 
+              ): 
+            current_block += tok_content
             block_list += [ [ current_block, startlinenum ], ]
-            startlinenum = tokendesc[2][0] + 1
+            startlinenum = tok_linenum + 1
             current_block = ""
             pos = 0
         else:
-            current_block += tokencontent
+            current_block += tok_content
+        previous_tok_type = tok_type
 
     DEBUGwrite(block_list, 'pyblocks')
-        
+
+    # So far we have only hashed in lines, but have not worried about 
+    # indentation, condense blocks will take care of this.
     block_list = condense_blocks(block_list)
     DEBUGwrite(block_list, 'pycondensedblocks')
     return block_list, new_options
@@ -398,6 +408,7 @@ def is_string_new_statement(string):
     """
     if ( string[0] == " "
             or string == ''
+            or string == '\n'
             or string[0:2] == "\n "
             or string[0:2] == "\n#"
             or string[0] == "#"
