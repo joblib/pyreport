@@ -7,7 +7,9 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 # Copyright (c) 2005 Gael Varoquaux
 # License: BSD Style
 
-#TODO: - Write unit tests
+#TODO: - Extend unit tests
+#      - Rework error reporting code to print the line where the error
+#        happened
 #      - Bug in the HTML pretty printer ? Line returns seem to big.
 #      - Proper documentation
 #      - Rework to API to allow better use from external programs
@@ -23,7 +25,7 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 #          LaTeX
 from __future__ import division
 
-DEBUG = False
+DEBUG = True
 __revision__ = "$Revision: $"
 __version__ = "0.2.11"
 
@@ -286,7 +288,21 @@ else:
         pass
 
 #-------------- Subroutines for python code hashing --------------------------
-def code2blocks(file_object, options):
+def generate_tokens(file_object):
+    """ Uses tokenize.generate_tokens to produce a generator of tokens with
+        useful info about the tokens.
+
+        the generator returns tuples :
+        (tok_type, tok_startpos, tok_content, tok_linenum)
+    """
+    return ( (token.tok_name[tokendesc[0]], 
+                        tokendesc[2][1],
+                        tokendesc[1],
+                        tokendesc[2][0] )
+               for tokendesc in tokenize.generate_tokens(file_object.readline)
+             )
+
+def code2blocks(file_object, options=copy.copy(default_options)):
     """ Returns the list of blocks to be processed of a given python file, 
     with there starting line number in the original file."""
     new_options = {}
@@ -299,12 +315,7 @@ def code2blocks(file_object, options):
     numopenbrakets = 0
     numopencurlybrakets = 0
     numopenpar = 0
-    tokens = ( (token.tok_name[tokendesc[0]], 
-                        tokendesc[2][1],
-                        tokendesc[1],
-                        tokendesc[2][0] )
-               for tokendesc in tokenize.generate_tokens(file_object.readline)
-             )
+    tokens = generate_tokens(file_object)
     for (tok_type, tok_startpos, tok_content, tok_linenum) in tokens:
         tok_initial_str = tok_content 
         if tok_linenum > linenum:

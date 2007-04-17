@@ -164,7 +164,8 @@ Here are two examples showing what you can do with `pyreport` :
     `The code <./example2.python>`__ , the `pdf generated
     <./example2.pdf>`__ , and the `html file generated <./example2.html>`__
 
-  * An exploration of the Julia sets, this example uses a LaTeX equation :
+  * An exploration of the Julia sets, this example uses a LaTeX equation
+    (LaTeX embedding does not work with html output, so far):
 
     `The code <./example.python>`__ , the `pdf generated
     <./example.pdf>`__ , and the `html file generated <./example.html>`__

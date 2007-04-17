@@ -11,6 +11,8 @@ testloader = unittest.TestLoader()
 load_test = lambda t: testsuite.addTest(
                testloader.loadTestsFromTestCase(t))
 
+S = cStringIO.StringIO
+
 class TestOptionParsing(unittest.TestCase):
 
     def test_parse_options(self):
@@ -48,11 +50,11 @@ class TestParser(unittest.TestCase):
 
     def test_code2blocks_empty(self):
         # First with an empty file: 
-        self.assertEqual( pyreport.code2blocks(cStringIO.StringIO(), 
+        self.assertEqual( pyreport.code2blocks(S(), 
                                     pyreport.default_options), ([["", 1]], {}))
 
     def test_code2blocks_1(self):
-        testfile = cStringIO.StringIO("""
+        testfile = S("""
 if 1:
     print "a"
     # foo
@@ -62,23 +64,21 @@ if 1:
     print "b"
 """) 
 
-        self.assertEqual( pyreport.code2blocks(testfile, 
-            pyreport.default_options), 
+        self.assertEqual( pyreport.code2blocks(testfile ), 
             ([['\nif 1:\n    print "a"\n    # foo\n\n# foo\n\n    print "b"\n',
             1]], {} ))
 
     def test_code2blocks_2(self):
-        testfile = cStringIO.StringIO("""print 1
-print 2
+        testfile = S("""
+if 1:
+    a = (1, 
+           4)
+                        
 
-# 
+    a""") 
 
-print 3
-""") 
-
-        self.assertEqual( pyreport.code2blocks(testfile, 
-            pyreport.default_options), ([['print 1\n', 1], ['print 2\n\n# \n\n',
-            2], ['print 3\n', 6]], {})
+        self.assertEqual( pyreport.code2blocks(testfile ),
+               ([['\nif 1:\n    a = (1, \n           4)\n\n\n    a', 4]], {}) 
             )
 
 load_test(TestParser)
@@ -96,17 +96,17 @@ load_test(TestRstCompiler)
 class TestMain(unittest.TestCase):
 
     def setUp(self):
-        self.outString = cStringIO.StringIO()
+        self.outString = S()
 
     def test_empty_file(self):
-        pyreport.main(cStringIO.StringIO(""), 
+        pyreport.main(S(""), 
                 overrides={'outfile':self.outString, 'outtype':'rst',
                             'quiet':True}),
         self.assertEqual(self.outString.getvalue(),
                 '.. header:: Compiled with pyreport\n\n\n\n')
 
     def test_hello_world(self):
-        pyreport.main(cStringIO.StringIO("print 'hello world'"), 
+        pyreport.main(S("print 'hello world'"), 
                 overrides={'outfile':self.outString, 'outtype':'rst',
                             'quiet':True, 'noecho':True }),
         self.assertEqual(self.outString.getvalue(),
@@ -140,5 +140,5 @@ if __name__ == '__main__':
     #unittest.main()
     runner.run(testsuite)
     document()
-    profile()
+    #profile()
    

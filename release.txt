@@ -25,6 +25,12 @@ uservalues
 
     * `pyreport 0.1.8 <./pyreport-0.1.8>`_
     
+.. warning::
+
+    Version 0.2.11 has an ugly bug that was introduced in 0.2.9. I am
+    working on it. In the mean time you might consider using 0.2.8 which
+    has a much less important bug.
+
 
 News
 ====
