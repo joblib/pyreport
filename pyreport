@@ -23,9 +23,9 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 #          LaTeX
 from __future__ import division
 
-DEBUG = True
+DEBUG = False
 __revision__ = "$Revision: $"
-__version__ = "0.2.10"
+__version__ = "0.2.11"
 
 #---------------------------- Imports ----------------------------------------
 # To deal with stderr 
@@ -1365,7 +1365,7 @@ def commandline_call():
     
     if not len(args)==1:
         if len(args)==0:
-            parser.print_help()
+            _parser.print_help()
         else:
             print  >> sys.stderr, "1 argument: input file"
         sys.exit(1)

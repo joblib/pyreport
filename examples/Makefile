@@ -1,4 +1,4 @@
-smalllist=latex.png simple.png pylab.png latex.py 
+smalllist=latex.png simple.png pylab.png 
 
 filelist=${smalllist} example.pdf example.html example.python example2.pdf example2.html example2.python
 
@@ -15,11 +15,15 @@ install: small
 	cp example2_pyreport_2.png /home/varoquau/www/src/computers/pyreport
 	cd /home/varoquau/www && make
 
+clean:
+	rm -f ${filelist}
+	rm -rf DEBUG
+
 %.python: %.py
 	cp $< $@
 
 export:
-	cd /home/varoquau/www && make install
+	print pass
 
 pylab.png: pylabex.png
 	cp $< $@

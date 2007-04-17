@@ -64,6 +64,21 @@ will generate a pdf (or a html, if it cannot find LaTeX) called
 Release notes
 ==============
 
+`pyreport` 0.2.11
+-----------------
+
+Fixed a typo in the help generating code. Thanks Guenter Milde. Now the
+help works.
+
+`pyreport` 0.2.10
+-----------------
+
+Fixed a bug reported by Tom Denniston. It turned out to be a tough one.
+The good thing is that it forced me to do some refactoring in the parsing
+code. I find all this code so ugly nowadays. It should be written with
+some use of the "yield" statement. I just need to find some time between
+other projects.
+
 `pyreport` 0.2.9
 ----------------
 

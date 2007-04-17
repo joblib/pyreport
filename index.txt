@@ -67,8 +67,14 @@ Requirements
 `pyreport` is of course written in python, and needs the python
 interpreter to run.
 
-* External programs (under windows make sure they are in the path,
-  elsewhere `pyreport` cannot find them):
+It should work on any operating system where python and the other
+requirements are available.
+
+* **External programs**:
+
+  Under windows make sure they are in the path, elsewhere `pyreport`
+  cannot find them. All these programs are available with the `MikTeX
+  <http://www.miktex.org/>`_ LaTeX distribution.
 
   * `pyreport` does not need any external programs to generate html
     files.
@@ -81,7 +87,7 @@ interpreter to run.
     documents. Once `matplotlib`_ has a pdf backend this will not be
     needed.
 
-* Python packages:
+* **Python packages**:
 
   * docutils only, so far
 
