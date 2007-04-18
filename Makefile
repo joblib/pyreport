@@ -25,9 +25,9 @@ release:
 	make web
 
 commit:
-	sed 's/DEBUG = True/DEBUG = False/' -i pyreport
+	sed 's/DEBUG = True/DEBUG = False/' -i pyreport.py
 	bzr commit
-	sed 's/DEBUG = False/DEBUG = True/' -i pyreport
+	sed 's/DEBUG = False/DEBUG = True/' -i pyreport.py
 
 push:
 	bzr push sftp://1and1/pyreport

@@ -35,7 +35,7 @@ import sys
 # To deal with regexp
 import re
 import os, os.path
-import token, tokenize
+import code_hasher
 # to treat StdIn, StdOut as files:
 import cStringIO
 from docutils import core as docCore
@@ -45,165 +45,10 @@ import operator
 from traceback import format_exc
 import __builtin__ # to override import ! :->
 
+# FIXME: Need to reorganize options import
+from options import *
+
 #------------------------ Initialisation and option parsing ------------------
-if os.name == "posix":
-    def silent_execute( string):
-        """ Execute the given shell adding > /dev/null if under a posix OS and 
-        > nul under windows ( scew microsoft !)"""
-        return os.system(string + " > /dev/null 2>/dev/null")
-else:
-    def silent_execute( string):
-        """ Execute the given shell adding > /dev/null if under a posix OS and 
-        > nul under windows ( screw microsoft !)"""
-        return os.system(string + " > nul")
-
-def verbose_execute(string):
-    """ Execute getting errors """
-    if os.system(string) != 0:
-        raise RuntimeError('Unable to execute %r'%string)
-
-# A dictionary describing the supported output type (as the keys of the
-# dictionnary) and the figure type allowed for each.
-allowed_types = {
-        "html": ("png", "jpg") ,
-        "rst" : ("png", "pdf", "ps", "jpg"), 
-        "moin": ("png", "jpg") ,
-        "trac" : ("png", "pdf", "ps", "jpg"), 
-}
-
-# Find out what output type we can provide (do we have latex ? epstopdf ?)
-# FIXME: Have a look at mpl to see how they do this.
-if not silent_execute("latex --help"):
-    allowed_types.update({
-        "tex" : ("eps","ps"),
-        "dvi" : ("eps",),
-        "ps"  : ("eps",),
-        "eps" : ("eps",),
-    })
-    # Why the hell does epstopdf return 65280 !!
-    if  silent_execute("epstopdf --help") in (0, 65280):
-        allowed_types.update({
-            "pdf" : ("pdf",),
-            "tex" : ("pdf", "eps","ps"),
-        })
-
-if not silent_execute("pdflatex --help"):
-    HAVE_PDFLATEX = True
-else:
-    HAVE_PDFLATEX = False
-
-# Build a parser object
-from optparse import OptionParser as _OptionParser
-usage = """usage: %prog [options] pythonfile
-
-Processes a python script and pretty prints the results using LateX. If 
-the script uses "show()" commands (from pylab) they are caught by 
-%prog and the resulting graphs are inserted in the output pdf.
-Comments lines starting with "#!" are interprated as rst lines
-and pretty printed accordingly in the pdf.
-    By Gael Varoquaux"""
-
-# Defaults are put to None and False in order to be able to track the changes.
-_parser = _OptionParser(usage=usage, version="%prog " +__version__ )
-_parser.add_option("-o", "--outfile", dest="outfilename",
-                help="write report to FILE", metavar="FILE")
-_parser.add_option("-x", "--noexecute",
-                action="store_true", dest="noexecute", default=False,
-                help="do not run the code, just extract the literate comments")
-_parser.add_option("-n", "--nocode",
-                dest="nocode", action="store_true", default=False,
-                help="do not display the source code")
-_parser.add_option("-d", "--double",
-                dest="double", action="store_true", default=False,
-                help="compile to two columns per page (only for pdf or tex output)")
-_parser.add_option("-t", "--type", metavar="TYPE",
-                action="store", type="string", dest="outtype",
-                default=None,
-                help="output to TYPE, TYPE can be " + ", ".join(allowed_types.keys()))
-_parser.add_option("-f", "--figuretype", metavar="TYPE",
-                action="store", type="string", dest="figuretype",
-                default=None,
-                help="output figure type TYPE  (TYPE can be of %s depending on report output type)" % (", ".join(reduce(lambda x, y : set(x).union(y) , allowed_types.values()) )) )
-_parser.add_option("-c", "--commentchar",
-                action="store", dest="commentchar", default="!",
-                metavar="CHAR",
-                help='literate comments start with "#CHAR" ')
-_parser.add_option("-l", "--latexliterals",
-                action="store_true", dest="latexliterals",
-                default=False,
-                help='allow LaTeX literal comment lines starting with "#$" ')
-_parser.add_option("-e", "--latexescapes",
-                action="store_true", dest="latexescapes",
-                default=False,
-                help='allow LaTeX math mode escape in code wih dollar signs ')
-_parser.add_option("-p", "--nopyreport",
-                action="store_true", dest="nopyreport", default=False,
-                help="disallow the use of #pyreport lines in the processed file to specify options")
-_parser.add_option("-q", "--quiet",
-                action="store_true", dest="quiet", default=False,
-                help="don't print status messages to stderr")
-_parser.add_option("-v", "--verbose",
-                action="store_true", dest="verbose", default=False,
-                help="print all the message, including tex messages")
-_parser.add_option("-s", "--silent",
-                dest="silent",action="store_true",
-                default=False,
-                help="""Suppress the display of warning and errors in the report""")
-_parser.add_option( "--noecho",
-                dest="noecho",action="store_true",
-                default=False,
-                help="""Turns off the echoing of the output of the script on the standard out""")
-_parser.add_option("-a", "--arguments",
-                action="store", dest="arguments",
-                default=None, type="string", metavar="ARGS",
-                help='pass the arguments "ARGS" to the script')
-
-# Create default options
-default_options, _not_used = _parser.parse_args(args =[])
-default_options._update_loose({
-        'infilename': None,
-        'outfile': None,
-    })
-
-def diff_dict(dict1, dict2):
-    """ Returns a dictionary with all the elements of dict1 that are not in
-        dict 2.
-
-    >>> diff_dict({1:2, 3:4}, {1:3, 3:4, 2:4})
-    {1: 2}
-    """
-    return_dict = {}
-    for key in dict1:
-        if key in dict2:
-            if not dict1[key] == dict2[key]:
-                return_dict[key] = dict1[key]
-        else:
-            return_dict[key] = dict1[key]
-    return return_dict
-
-def parse_options(arguments, initial_options=copy.copy(default_options), 
-                                    allowed_types=allowed_types):
-    """ Parse options in the arguments list given.
-        Return a dictionary containing all the options different specified,
-        and only these, and the arguments.
-        Returns outfilename without the extension ! (important)
-
-    >>> parse_options(['-o','foo.ps','-s',])
-    ({'outfilename': 'foo', 'outtype': 'ps', 'silent': True}, [])
-    """
-    (options, args) = _parser.parse_args(args=arguments)
-    if (options.outtype == None and 
-            options.outfilename and 
-            '.' in options.outfilename) :
-        basename, extension = os.path.splitext(options.outfilename)
-        if extension[1:] in allowed_types:
-            options.outtype = extension[1:]
-            options.outfilename = basename
-    options_dict = options.__dict__
-    initial_options_dict = initial_options.__dict__
-    
-    return diff_dict(options_dict, initial_options_dict), args
-
 def guess_names_and_types(options, allowed_types=allowed_types):
     """ This function tries to transform the current state of the options 
         to something useable. It tries to match user requests with the 
@@ -288,148 +133,6 @@ else:
         pass
 
 #-------------- Subroutines for python code hashing --------------------------
-def generate_tokens(file_object):
-    """ Uses tokenize.generate_tokens to produce a generator of tokens with
-        useful info about the tokens.
-
-        the generator returns tuples :
-        (tok_type, tok_startpos, tok_content, tok_linenum)
-    """
-    return ( (token.tok_name[tokendesc[0]], 
-                        tokendesc[2][1],
-                        tokendesc[1],
-                        tokendesc[2][0] )
-               for tokendesc in tokenize.generate_tokens(file_object.readline)
-             )
-
-
-def code2blocks(file_object, options=copy.copy(default_options)):
-    """ Returns the list of blocks to be processed of a given python file, 
-    with there starting line number in the original file."""
-    new_options = {}
-    block_list = []
-    current_block = ""
-    startlinenum = 1
-    linenum = 0
-    pos = 0
-    previous_tok_type = ""
-    numopenbrakets = 0
-    numopencurlybrakets = 0
-    numopenpar = 0
-    tokens = generate_tokens(file_object)
-    for (tok_type, tok_startpos, tok_content, tok_linenum) in tokens:
-        tok_initial_str = tok_content 
-        if tok_linenum > linenum:
-            # We just started a new line
-            tok_content = tok_startpos * " " + tok_content
-        elif tok_startpos > pos :
-            tok_content = (tok_startpos - pos) * " " + tok_content
-        pos = tok_startpos + len(tok_initial_str)
-        linenum = tok_linenum
-        if tok_type == 'OP':
-            if   tok_initial_str == "{": numopencurlybrakets += 1
-            elif tok_initial_str == "}": numopencurlybrakets += -1
-            elif tok_initial_str == "[": numopenbrakets += 1
-            elif tok_initial_str == "]": numopenbrakets += -1
-            elif tok_initial_str == "(": numopenpar += 1
-            elif tok_initial_str == ")": numopenpar += -1
-        if tok_type == "COMMENT" and current_block == "" and len(block_list)>0:
-            # Check to see if this is an option line
-            for line in tok_content.split("\n"):
-                if line[:10] == "#pyreport " and not options.nopyreport:
-                    new_options.update_loose(
-                        parse_options(line[10:].split(" "))[0])
-            block_list[-1][0] += tok_content
-            pos = 0
-            startlinenum = tok_linenum + 1
-        elif ( ( tok_type == 'NL' and previous_tok_type == 'COMMENT' ) 
-             or
-               ( numopenbrakets == 0 
-                 and numopencurlybrakets == 0 
-                 and numopenpar == 0 
-                 and ( tok_type == 'NEWLINE' or tok_type == 'ENDMARKER' )
-                ) 
-              ): 
-            current_block += tok_content
-            block_list += [ [ current_block, startlinenum ], ]
-            startlinenum = tok_linenum + 1
-            current_block = ""
-            pos = 0
-        else:
-            current_block += tok_content
-        previous_tok_type = tok_type
-
-    DEBUGwrite(block_list, 'pyblocks')
-
-    # So far we have only hashed in lines, but have not worried about 
-    # indentation, condense blocks will take care of this.
-    block_list = condense_blocks(block_list)
-    DEBUGwrite(block_list, 'pycondensedblocks')
-    return block_list, new_options
-
-def condense_blocks(block_list):
-    r""" Groups the code lines together to form the code blocks. The different 
-        blocks should already be a full statement.
-
-    >>> condense_blocks([['a = 0\n', 1], ['if a == 0:\n', 2], ['  pass\n', 3]])
-    [['a = 0\n', 1], ['if a == 0:\n  pass\n', 2]]
-    >>> condense_blocks([['if a == 0:\n', 1], ['#a\n', 2], ['  pass\n', 3]])
-    [['if a == 0:\n#a\n  pass\n', 1]]
-    >>> condense_blocks([['if a == 0:\n', 1], [' a\n', 2], ['else: b\n', 3]])
-    [['if a == 0:\n a\nelse: b\n', 1]]
-    >>> condense_blocks([['a ={1:2\n', 1], ['3:4}\n', 2]])
-    [['a ={1:2\n', 1], ['3:4}\n', 2]]
-    """
-    # The reason we return the list is to use pop and append, but operating on
-    # the "front" of the list.
-    block_list.reverse()
-    out_block_list = []
-    try:
-        while(True):
-            out_block_list+= [pop_statement_block(block_list), ]
-    except IndexError:
-        pass
-    return out_block_list
-    
-def pop_statement_block(block_list):
-    r""" This function is given a block list and returns the small standalone 
-        statement it can find by concatenating the code blocks of the list.
-        Works from the _end_ of the list, backwards.
-        It also pops all these blocks from the block list (so it modifies it, 
-        careful, side effect !)
-
-    >>> pop_statement_block([['b\n', 3], [' a\n', 2], ['if a:\n', 1]])
-    ['if a:\n a\n', 1]
-    """
-    block = block_list.pop()
-    # If list is empty, the index error will be caught one level up.
-    statement = block[0]
-    line_num = block[1]
-    try:
-        block = block_list.pop()
-        while( not is_string_new_statement(block[0])):
-            statement += block[0]
-            block = block_list.pop()
-        block_list.append(block)
-    except IndexError:
-        pass
-    return [statement, line_num]
-
-def is_string_new_statement(string):
-    """ This functions is given a string and checks if it is a new statement.
-    """
-    if ( string[0] == " "
-            or string == ''
-            or string == '\n'
-            or string[0:2] == "\n "
-            or string[0:2] == "\n#"
-            or string[0] == "#"
-            # FIXME: This needs testing: added support for decorators
-            or re.match(r"\n*(elif|else|finally|except|@)", string) ):
-        return False
-    else:
-        return True
-
 def first_block(options):
     """ This function creates the first block that is injected in the code to 
         get it started.
@@ -440,13 +143,14 @@ def first_block(options):
         new_argv = [options.infilename, ]
     if not options.arguments == None:
         new_argv += options.arguments.split(' ')
-    return ["\n\nimport sys\nsys.argv = %s\n" % new_argv, 0]
+    codeblock = code_hasher.CodeBlock(0)
+    codeblock.string = "\n\nimport sys\nsys.argv = %s\n" % new_argv
+    return codeblock
 
 #-------------- Subroutines for python code execution ------------------------
-class ExecuteLambda(object):
-    """ Generate a function that can be applied to python code blocks to 
-    execute them, remembering the namespace thus created and the list of 
-    figures """
+class SandBox(object):
+    """ Implements a sandbox environement for executing code into.
+    """
     
     # List holding the figures created by the call last executed
     current_figure_list = ()
@@ -456,19 +160,24 @@ class ExecuteLambda(object):
     
     namespace = {}
 
-    def __init__(self, options, myshow):
-        """ This function/object acts as a memory for the code blocks. The
+    def __init__(self, myshow, options = default_options):
+        """ This object acts as a memory for the code blocks. The
             reason we pass it pylab, is so that it can retrieve the figurelist
         """
         self.options = options
         self.myshow = myshow
     
+        self.__call__(first_block(options))
+    
     def __call__(self, block):
+        return self.executeblock(block)
+
+    def executeblock(self, block):
         """ Excute a python command block, returns the stderr and the stdout 
         generated, and the list of figures generated."""
     
-        block_text = "\n\n" + block[0]
-        line_number = block[1]
+        block_text = "\n\n" + block.string
+        line_number = block.start_row
         out_value = ""
     
         # This import should not be needed, but it works around a very
@@ -478,15 +187,15 @@ class ExecuteLambda(object):
         code_out = cStringIO.StringIO()
         code_err = cStringIO.StringIO()
    
-        captured_exc = None
+        captured_exception = None
         # capture output and errors
         sys.stdout = code_out
         sys.stderr = code_err
         try:
             exec block_text in self.namespace
-        except Exception, captured_exc:
-            if isinstance(captured_exc, KeyboardInterrupt):
-                raise captured_exc
+        except Exception, captured_exception:
+            if isinstance(captured_exception, KeyboardInterrupt):
+                raise captured_exception
             print >> sys.stderr, format_exc()      
         
         # restore stdout and stderr
@@ -499,7 +208,7 @@ class ExecuteLambda(object):
         code_out.close()
         code_err.close()
 
-        if captured_exc: 
+        if captured_exception: 
             print >> sys.stderr, "Error in executing script on block starting line ", line_number ,": " 
             print >> sys.stderr, error_value
         self.namespace = globals()
@@ -518,7 +227,7 @@ class ExecuteLambda(object):
         if self.options.silent:
             error_value = ""
             
-        return (block[1], block[0], out_value, error_value, 
+        return (block.start_row, block.string, out_value, error_value, 
                                                 self.current_figure_list)
 
 # FIXME: Check the structure of the code doing the overloading, it may not be 
@@ -599,7 +308,7 @@ def execute_block_list(block_list, options=copy.copy(default_options)):
         #__builtin__.__import__ = myimport
         __builtin__.__import__ = MyImport(options)
         
-        execute_block = ExecuteLambda(options, myshow)
+        execute_block = SandBox(myshow, options=options)
 
     else:
         execute_block = lambda block : [block[1], block[0], None, None, ()] 
@@ -1427,8 +1136,9 @@ def main(pyfile, overrides={}, initial_options=copy.copy(default_options),
     parsing_options = copy.copy(options)
     parsing_options._update_loose(overrides)
     # Slice the input file into code blocks
-    block_list, script_options = code2blocks(pyfile, copy.copy(options))
-    pyfile.close()
+    block_list = code_hasher.iterblocks(pyfile)
+    # FIXME: Need to deal with the script's options
+    script_options = {}
 
     # Override the options given by the script by the command line switch
     script_options.update(overrides)
@@ -1436,19 +1146,12 @@ def main(pyfile, overrides={}, initial_options=copy.copy(default_options),
     options._update_loose(script_options)
     options = guess_names_and_types(options, allowed_types=allowed_types)
 
-    # Add the first block
-    block_list = [first_block(options), ] + block_list
-
     # Process the blocks
     output_list = execute_block_list(block_list, options)
     DEBUGwrite( output_list, 'output_list')
 
     open_outfile(options)
    
-    # Clean up the output list
-    if not options.nocode:
-        output_list = output_list[1:]
-
     output_list = shape_output_list(output_list, options)
     
     global compilers

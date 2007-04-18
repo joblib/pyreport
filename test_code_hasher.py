@@ -11,7 +11,7 @@ load_test = lambda t: testsuite.addTest(
                testloader.loadTestsFromTestCase(t))
 
 def xreadlines(s):
-    if not s or not s[-1]=="\n":
+    if  s and not s[-1]=="\n":
         s += "\n"
     return (line for line in StringIO.StringIO(s))
 
@@ -41,7 +41,7 @@ class TestCodeLines(unittest.TestCase):
 
     def test_options(self):
         self.check_signature('a\n#pyreport -n\n', 
-                        [('a\n', 1, {}), ('a\n', 2, {})])
+                        [('a\n', 1, {}), ('#pyreport -n\n', 2, {})])
 
 ########################################################################
 # Test the code_block generation

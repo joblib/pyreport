@@ -7,7 +7,7 @@ import token
 import tokenize
 import re
 
-from pyreport import parse_options
+from options import parse_options
 
 
 class Token(object):
