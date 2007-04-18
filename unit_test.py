@@ -131,6 +131,11 @@ class TestMain(unittest.TestCase):
 
 load_test(TestMain)
 
+# Add the sub module tests
+testsuite.addTest(
+               testloader.loadTestsFromName('test_code_hasher'))
+
+
 # Now add the doctest tests:
 testsuite.addTest(doctest.DocTestSuite(pyreport))
 doctest.DocTestSuite(pyreport)
