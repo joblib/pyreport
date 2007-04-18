@@ -121,6 +121,7 @@ class CodeHasher(object):
             self.yieldcodelines
             self.yieldtokens
     """
+    options = {}
 
     def __init__(self, xreadlines):
         self.xreadlines = xreadlines
@@ -131,6 +132,8 @@ class CodeHasher(object):
         for codeline in self.yieldcodelines():            
             if codeline.isnewblock() and not last_line_has_decorator :
                 if codeblock.string:
+                    self.options.update(codeblock.options)
+                    codeblock.options.update(self.options)
                     yield codeblock
                 codeblock = CodeBlock(codeline.start_row)
                 codeblock.append(codeline)
@@ -141,12 +144,16 @@ class CodeHasher(object):
                 line_end = codeline.string.rstrip()
                 if line_end and line_end == ':' : 
                     if codeblock.string:
+                        self.options.update(codeblock.options)
+                        codeblock.options.update(self.options)
                         yield codeblock
                     codeblock = CodeBlock(codeline.start_row)
             else:
                 codeblock.append(codeline)
             last_line_has_decorator = False
         else:
+            self.options.update(codeblock.options)
+            codeblock.options.update(self.options)
             yield codeblock
 
     def yieldcodelines(self):

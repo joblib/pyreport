@@ -164,7 +164,7 @@ class SandBox(object):
         """ This object acts as a memory for the code blocks. The
             reason we pass it pylab, is so that it can retrieve the figurelist
         """
-        self.options = options
+        self.intial_options = options
         self.myshow = myshow
     
         self.__call__(first_block(options))
@@ -178,6 +178,7 @@ class SandBox(object):
     
         block_text = "\n\n" + block.string
         line_number = block.start_row
+        self.options._update_loose(block.options)
         out_value = ""
     
         # This import should not be needed, but it works around a very
@@ -1102,7 +1103,7 @@ def commandline_call():
     options.update({'infilename':args[0]})
 
     main(pyfile, overrides=options)
-    # FIXME: with about the options defined in the script: options.quiet
+    # FIXME: wath about the options defined in the script: options.quiet
     if not 'quiet' in options:
         print >>sys.stderr, "Ran script in %.2fs" % (time.time() - t1)
 
