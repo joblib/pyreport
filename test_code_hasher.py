@@ -15,20 +15,45 @@ def xreadlines(s):
         s += "\n"
     return (line for line in StringIO.StringIO(s))
 
-def block_signature(code_block):
-    return (code_block.string, code_block.end_row)
+def line_signature(line_object):
+    return (line_object.string, line_object.end_row, line_object.options)
 
-def block_list_signature(block_list):
-    return [block_signature(block) for block in block_list]
+def line_list_signature(line_list):
+    return [line_signature(line) for line in line_list]
 
-class TestCodeHasher(unittest.TestCase):
+########################################################################
+# Test the separation in logical lines
+
+class TestCodeLines(unittest.TestCase):
+
+    def check_signature(self, in_string, signature):
+        H = C.CodeHasher(xreadlines(in_string))
+        code_line_list = [l for l in H.yieldcodelines()]
+        signature2 = line_list_signature(code_line_list)
+        self.assertEqual(signature, signature2)
+
+    def test_lines(self):
+        self.check_signature('a\na', [('a\n', 1, {}), ('a\n', 2, {})])
+
+    def test_comments(self):
+        self.check_signature('a\n#a\na', [('a\n', 1, {}), ('#a\na\n', 3,
+                    {})])
+
+    def test_options(self):
+        self.check_signature('a\n#pyreport -n\n', 
+                        [('a\n', 1, {}), ('a\n', 2, {})])
+
+########################################################################
+# Test the code_block generation
+
+class TestIterBlock(unittest.TestCase):
 
     def is_single_block(self, string):
         codeblock = C.CodeBlock(0)
         codeblock.string = ''.join(xreadlines(string))
         block_list = list( C.iterblocks(xreadlines(string)) )
-        self.assertEqual(block_list_signature([codeblock]), 
-                         block_list_signature(block_list))
+        self.assertEqual(line_list_signature([codeblock]), 
+                         line_list_signature(block_list))
 
     def test_empty(self):
         self.is_single_block("a")
@@ -65,31 +90,9 @@ if 1:
     def test_decorator(self):
         self.is_single_block("@staticmethod\ndef foo()")
 
-load_test(TestCodeHasher)
+load_test(TestIterBlock)
 
+########################################################################
 if __name__ == "__main__" :
     unittest.TextTestRunner().run(testsuite)
-
-################"
-#
-#c = C.CodeHasher()
-#f = file('plot.py')
-#c.yield_rawlines = f.xreadlines()
-#for t in c.yield_tokens():
-#    print t
-#
-#c = C.CodeHasher()
-#f = file('plot.py')
-#c.yield_rawlines = f.xreadlines()
-#for l in c.yield_codelines():
-#    print repr(l.string), l.is_new_block()
-#
-#print '___________'
-#
-#c = C.CodeHasher()
-#f = file('plot.py')
-#c.yield_rawlines = f.xreadlines()
-#for b in c.yield_codeblocks():
-#    print repr(b.string)
-#
 
