@@ -78,7 +78,26 @@ if 1:
     a""") 
 
         self.assertEqual( pyreport.code2blocks(testfile ),
-               ([['\nif 1:\n    a = (1, \n           4)\n\n\n    a', 4]], {}) 
+               ([['\nif 1:\n    a = (1, \n           4)\n\n\n    a', 1]], {}) 
+            )
+
+    def test_code2blocks_3(self):
+        testfile = S("""
+if 1:
+
+    # Comment
+
+    a""") 
+
+        self.assertEqual( pyreport.code2blocks(testfile ),
+               ([['\nif 1:\n    # Comment\n\n    a', 1]], {}) 
+            )
+
+    def test_code2blocks_4(self):
+        testfile = S("@staticmethod\ndef foo()") 
+
+        self.assertEqual( pyreport.code2blocks(testfile ),
+               ([['@staticmethod\ndef foo()', 1]], {}) 
             )
 
 load_test(TestParser)

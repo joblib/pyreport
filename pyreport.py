@@ -27,7 +27,7 @@ from __future__ import division
 
 DEBUG = True
 __revision__ = "$Revision: $"
-__version__ = "0.2.11"
+__version__ = "0.3.0"
 
 #---------------------------- Imports ----------------------------------------
 # To deal with stderr 
@@ -301,6 +301,90 @@ def generate_tokens(file_object):
                         tokendesc[2][0] )
                for tokendesc in tokenize.generate_tokens(file_object.readline)
              )
+
+class CodeHasher(object):
+    """ Object that transform the code file it is feed in minimal
+        independant blocks."""
+
+    current_block = ""
+    startlinenum = 1
+    linenum = 0
+    pos = 0
+    previous_tok_type = ""
+    numopenbrakets = 0
+    numopencurlybrakets = 0
+    numopenpar = 0
+
+    def __init__(self, file_object, options=copy.copy(default_options)):
+        """ Method used to feed the Hasher """
+        self.tokens = generate_tokens(file_object)
+        self.new_options = {}
+        self.options = options
+        self.block_list = []
+
+    def eat_token(self):
+        """ Eats a token and advances the cursor """
+        (self.tok_type, 
+         self.tok_startpos, 
+         self.tok_content,
+         self.tok_linenum) = self.tokens.next()
+
+        if self.tok_linenum > self.linenum:
+            # We just started a new line
+            self.tok_string = self.tok_startpos * " " + self.tok_content
+        elif self.tok_startpos > self.pos :
+            self.tok_string = (self.tok_startpos - self.pos) * " " + self.tok_content
+        self.pos = self.tok_startpos + len(self.tok_content)
+        self.linenum = self.tok_linenum
+        self.current_block += self.tok_content
+
+    def is_line_complete(self):
+        if self.tok_type == 'OP':
+            if   self.tok_content == "{": self.numopencurlybrakets += 1
+            elif self.tok_content == "}": self.numopencurlybrakets += -1
+            elif self.tok_content == "[": self.numopenbrakets += 1
+            elif self.tok_content == "]": self.numopenbrakets += -1
+            elif self.tok_content == "(": self.numopenpar += 1
+            elif self.tok_content == ")": self.numopenpar += -1
+
+        if ( ( self.tok_type == 'NL' and self.previous_tok_type == 'COMMENT' ) 
+             or
+               ( self.numopenbrakets == 0 
+                 and self.numopencurlybrakets == 0 
+                 and self.numopenpar == 0 
+                 and ( self.tok_type == 'NEWLINE' or self.tok_type == 'ENDMARKER' )
+                ) 
+              ):
+            return True
+        else:
+            return False
+
+    def finish_code_line(self):
+        """ Adds the current block to the block list and flushes what
+            needs to be flushed """
+        self.block_list += [ [ self.current_block, self.startlinenum ], ]
+        self.current_block = ""
+        self.startlinenum = self.tok_linenum + 1
+        self.pos = 0
+
+    def tokens2code_lines(self):
+        """ Unites the tokens into complete code lines """
+        try:
+            while(True):
+                self.eat_token()
+                if self.is_line_complete():
+                    self.finish_code_line()
+                self.previous_tok_type = self.tok_type
+        except StopIteration:
+            pass
+
+    def code_lines2blocks(self):
+        """ Unites codes lines into root level blocks """
+        pass
+
+    def hash(self):
+        """ Hashes the code and returns the code blocks """
+        pass
 
 def code2blocks(file_object, options=copy.copy(default_options)):
     """ Returns the list of blocks to be processed of a given python file, 
