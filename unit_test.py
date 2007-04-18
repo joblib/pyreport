@@ -3,15 +3,13 @@
 import pyreport
 
 import unittest, doctest
-import cStringIO
 import pydoc
+from cStringIO import StringIO as S
 
 testsuite = unittest.TestSuite()
 testloader = unittest.TestLoader()
 load_test = lambda t: testsuite.addTest(
                testloader.loadTestsFromTestCase(t))
-
-S = cStringIO.StringIO
 
 class TestOptionParsing(unittest.TestCase):
 
