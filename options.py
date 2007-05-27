@@ -9,16 +9,10 @@ import os
 # pyreport.py file.
 __version__ = "nononon"
 
-if os.name == "posix":
-    def silent_execute( string):
-        """ Execute the given shell adding > /dev/null if under a posix OS and 
-        > nul under windows ( scew microsoft !)"""
-        return os.system(string + " > /dev/null 2>/dev/null")
-else:
-    def silent_execute( string):
-        """ Execute the given shell adding > /dev/null if under a posix OS and 
-        > nul under windows ( screw microsoft !)"""
-        return os.system(string + " > nul")
+def silent_execute( string):
+    """ Execute the given shell adding > /dev/null if under a posix OS and 
+    > nul under windows ( scew microsoft !)"""
+    return os.system(string + " > " + os.devnull)
 
 def verbose_execute(string):
     """ Execute getting errors """
