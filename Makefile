@@ -1,23 +1,23 @@
 filelist=help.rst download.rst index.txt release.txt help.rst latest.rst
 
 small: ${filelist}
-	cd examples && make small
+	cd pyreport/examples && make small
 
 all: ${filelist}
-	cd examples && make
+	cd pyreport/examples && make
 
 install: all
 	cp ${filelist} /home/varoquau/www/src/computers/pyreport
-	cd examples && make install
+	cd pyreport/examples && make install
 
 clean:
-	rm -rf DEBUG
-	cd examples && make clean
+	rm -rf pyreport/DEBUG
+	cd pyreport/examples && make clean
 
 release:
 	make clean
-	test "$$(./pyreport --version)" != "$$(/home/varoquau/www/src/computers/pyreport/pyreport --version)" || print "!!!! WARNING !!!! Version number has not been changed"
-	cp pyreport /home/varoquau/www/src/computers/pyreport
+	test "$$(./pyreport/pyreport --version)" != "$$(/home/varoquau/www/src/computers/pyreport/pyreport --version)" || print "!!!! WARNING !!!! Version number has not been changed"
+	cp pyreport/pyreport /home/varoquau/www/src/computers/pyreport
 	make commit
 	make push
 	make install
@@ -25,9 +25,9 @@ release:
 	make web
 
 commit:
-	sed 's/DEBUG = True/DEBUG = False/' -i pyreport.py
+	sed 's/DEBUG = True/DEBUG = False/' -i pyreport/pyreport.py
 	bzr commit
-	sed 's/DEBUG = False/DEBUG = True/' -i pyreport.py
+	sed 's/DEBUG = False/DEBUG = True/' -i pyreport/pyreport.py
 
 push:
 	bzr push sftp://1and1/pyreport
@@ -40,19 +40,19 @@ help.rst: pyreport
 	#echo "::" > help.rst
 	#echo "" >> help.rst
 	rm -f help.rst
-	./pyreport -h >> help.rst
+	./pyreport/pyreport -h >> help.rst
 	echo "" >> help.rst
 	sed 's/^/  /' -i help.rst
 
 download.rst: pyreport
 	rm -f download.rst
-	echo '* `'$$(./pyreport --version) '<./pyreport>`_'  > download.rst
+	echo '* `'$$(./pyreport/pyreport --version) '<./pyreport>`_'  > download.rst
 
 latest.rst: pyreport
 	rm -f latest.rst
-	echo '`download '$$(./pyreport --version) '<./release.html>`_'  > latest.rst
+	echo '`download '$$(./pyreport/pyreport --version) '<./release.html>`_'  > latest.rst
 
 export: 
 	scp ${filelist} 1and1:computers/pyreport
-	cd examples && make export
+	cd pyreport/examples && make export
 
