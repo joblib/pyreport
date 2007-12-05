@@ -80,7 +80,7 @@ class CodeLine(object):
     def isnewblock(self):
         """ This functions checks if the code line start a new block.
         """
-        if re.match(r"\n*(elif|else|finally|except| |#)", self.string):
+        if re.match(r"\n*(elif|else|finally|except| |\t|#)", self.string):
             return False
         else:
             return True        
@@ -141,7 +141,7 @@ class CodeHasher(object):
                 if line_start and line_start[0] == '@':
                         last_line_has_decorator = True
                         continue
-                line_end = codeline.string.rstrip()
+                line_end = codeline.string.rstrip(" \n")
                 if line_end and line_end == ':' : 
                     if codeblock.string:
                         self.options.update(codeblock.options)
