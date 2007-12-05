@@ -25,7 +25,7 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 #          LaTeX
 from __future__ import division
 
-DEBUG = False
+DEBUG = True
 __revision__ = "$Revision: $"
 __version__ = "0.3.0"
 
@@ -164,7 +164,8 @@ class SandBox(object):
         """ This object acts as a memory for the code blocks. The
             reason we pass it pylab, is so that it can retrieve the figurelist
         """
-        self.intial_options = options
+        self.initial_options = options
+        self.options = copy.copy(options)
         self.myshow = myshow
     
         self.__call__(first_block(options))

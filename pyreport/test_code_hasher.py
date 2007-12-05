@@ -19,7 +19,11 @@ def line_signature(line_object):
     return (line_object.string, line_object.end_row, line_object.options)
 
 def line_list_signature(line_list):
-    return [line_signature(line) for line in line_list]
+    signature = [line_signature(line) for line in line_list]
+    if signature[-1][0] == '':
+        signature.pop()
+    return signature
+
 
 ########################################################################
 # Test the separation in logical lines
