@@ -91,6 +91,9 @@ if 1:
 
     a""")
 
+    def test_function_declaration(self):
+        self.is_single_block("def foo():\n foo")
+
     def test_decorator(self):
         self.is_single_block("@staticmethod\ndef foo()")
 
