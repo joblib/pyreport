@@ -53,7 +53,7 @@ class TestIterBlock(unittest.TestCase):
 
     def is_single_block(self, string):
         codeblock = C.CodeBlock(0)
-        codeblock.string = ''.join(C.xreadlines(string))
+        codeblock.string = ''.join(C.xreadlines(string.expandtabs()))
         block_list = list( C.iterblocks(C.xreadlines(string)) )
         self.assertEqual(line_list_signature([codeblock]), 
                          line_list_signature(block_list))
@@ -99,7 +99,23 @@ if 1:
     def test_decorator(self):
         self.is_single_block("@staticmethod\ndef foo():\n foo")
 
+
 load_test(TestIterBlock)
+
+########################################################################
+# Test if the code is indeed kept similar by the hash
+
+class TestReconstitution(unittest.TestCase):
+
+    def is_same_code(self, codestring):
+        out = ''.join([i.string
+                    for i in C.iterblocks(C.xreadlines(codestring))])
+        self.assertEqual(codestring.expandtabs(), out)
+
+    def test_long_block(self):
+        self.is_same_code("def f():\n\t1\n\t2\n")
+
+load_test(TestReconstitution)
 
 ########################################################################
 if __name__ == "__main__" :

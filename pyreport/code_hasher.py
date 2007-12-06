@@ -115,9 +115,9 @@ class CodeBlock(object):
         self.options.update(codeline.options)
 
     def __repr__(self):
-        return('<CodeBlock object, id %i, line %i, %s, options %s>'
-                    % (id(self), self.start_row, repr(self.string),
-                            repr(self.options) ) )
+        return('<CodeBlock object, id %i, line %i, options %s\n%s>'
+                    % (id(self), self.start_row, 
+                            repr(self.options), self.string ) )
 
 
 ##############################################################################
@@ -142,6 +142,9 @@ class CodeHasher(object):
             xreadline function of this module.
         """
         self.xreadlines = xreadlines
+
+    def next_line_generator(self):
+        return self.xreadlines.next().expandtabs()
 
     def itercodeblocks(self):
         """ Returns a generator on the blocks of this code.
@@ -192,7 +195,7 @@ class CodeHasher(object):
     def itertokens(self):
         """ Returns a generator on the tokens of this code.
         """
-        for token_desc in tokenize.generate_tokens(self.xreadlines.next):
+        for token_desc in tokenize.generate_tokens(self.next_line_generator):
             yield Token(token_desc)
 
 
