@@ -3,17 +3,11 @@ Defines the unit tests for the code hasher.
 """
 import code_hasher as C
 import unittest
-import StringIO
 
 testsuite = unittest.TestSuite()
 testloader = unittest.TestLoader()
 load_test = lambda t: testsuite.addTest(
                testloader.loadTestsFromTestCase(t))
-
-def xreadlines(s):
-    if  s and not s[-1]=="\n":
-        s += "\n"
-    return (line for line in StringIO.StringIO(s))
 
 def line_signature(line_object):
     return (line_object.string, line_object.end_row, line_object.options)
@@ -31,7 +25,7 @@ def line_list_signature(line_list):
 class TestCodeLines(unittest.TestCase):
 
     def check_signature(self, in_string, signature):
-        H = C.CodeHasher(xreadlines(in_string))
+        H = C.CodeHasher(C.xreadlines(in_string))
         code_line_list = [l for l in H.yieldcodelines()]
         signature2 = line_list_signature(code_line_list)
         self.assertEqual(signature, signature2)
@@ -47,15 +41,16 @@ class TestCodeLines(unittest.TestCase):
         self.check_signature('a\n#pyreport -n\n', 
                         [('a\n', 1, {}), ('#pyreport -n\n', 2, {})])
 
+
 ########################################################################
-# Test the code_block generation
+# Test the separation in code blocks
 
 class TestIterBlock(unittest.TestCase):
 
     def is_single_block(self, string):
         codeblock = C.CodeBlock(0)
-        codeblock.string = ''.join(xreadlines(string))
-        block_list = list( C.iterblocks(xreadlines(string)) )
+        codeblock.string = ''.join(C.xreadlines(string))
+        block_list = list( C.iterblocks(C.xreadlines(string)) )
         self.assertEqual(line_list_signature([codeblock]), 
                          line_list_signature(block_list))
 
@@ -94,8 +89,11 @@ if 1:
     def test_function_declaration(self):
         self.is_single_block("def foo():\n foo")
 
+    def test_tabbed_block(self):
+        self.is_single_block("def foo():\n\tfoo")
+
     def test_decorator(self):
-        self.is_single_block("@staticmethod\ndef foo()")
+        self.is_single_block("@staticmethod\ndef foo():\n foo")
 
 load_test(TestIterBlock)
 

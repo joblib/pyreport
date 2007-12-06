@@ -6,10 +6,20 @@ full code blocks ready for execution.
 import token
 import tokenize
 import re
+import StringIO
 
 from options import parse_options
 
+def xreadlines(s):
+    """ Helper function to use a string in the code hasher:
+    blocks = iterblock(xreadlines('1\n2\n\n3'))
+    """
+    if  s and not s[-1]=="\n":
+        s += "\n"
+    return (line for line in StringIO.StringIO(s))
 
+
+##############################################################################
 class Token(object):
     """ A token object"""
 
@@ -27,8 +37,9 @@ class Token(object):
         return str((self.type, self.content))
 
 
+##############################################################################
 class CodeLine(object):
-    """ An object representing a full logicial line of code """
+    """ An object representing a full logical line of code """
     string = ""
     open_symbols = {'{':0, '(':0, '[':0}
     closing_symbols = {'}':'{', ')':'(', ']':'['} 
@@ -89,6 +100,7 @@ class CodeLine(object):
         return repr(self.string)
 
 
+##############################################################################
 class CodeBlock(object):
     """ Object that represents a full executable block """
     string = ""
@@ -108,8 +120,9 @@ class CodeBlock(object):
                             repr(self.options) ) )
 
 
+##############################################################################
 class CodeHasher(object):
-    """ Implements a object that transforms a iterator of raw code lines
+    """ Implements a object that transforms an iterator of raw code lines
         in an iterator of code blocks.
 
         Input:
@@ -117,19 +130,25 @@ class CodeHasher(object):
                                  file.xreadlines()
 
         Output: Generators :
-            self.yieldcodeblocks
-            self.yieldcodelines
-            self.yieldtokens
+            self.itercodeblocks
+            self.itercodelines
+            self.itertokens
     """
     options = {}
 
     def __init__(self, xreadlines):
+        """ The constructor takes as an argument an iterator on lines such 
+            as the xreadline method of a file, or what is returned by the 
+            xreadline function of this module.
+        """
         self.xreadlines = xreadlines
 
-    def yieldcodeblocks(self):
+    def itercodeblocks(self):
+        """ Returns a generator on the blocks of this code.
+        """
         codeblock = CodeBlock(0)
         last_line_has_decorator = False
-        for codeline in self.yieldcodelines():            
+        for codeline in self.itercodelines():            
             if codeline.isnewblock() and not last_line_has_decorator :
                 if codeblock.string:
                     self.options.update(codeblock.options)
@@ -142,12 +161,14 @@ class CodeHasher(object):
                         last_line_has_decorator = True
                         continue
                 line_end = codeline.string.rstrip(" \n")
-                if line_end and line_end == ':' : 
-                    if codeblock.string:
-                        self.options.update(codeblock.options)
-                        codeblock.options.update(self.options)
-                        yield codeblock
-                    codeblock = CodeBlock(codeline.start_row)
+# FIXME: I don't understand the purpose of this code. Until I don't have
+# a test case that fail, I leave it commented out.
+#                if line_end and line_end == ':' : 
+#                    if codeblock.string:
+#                        self.options.update(codeblock.options)
+#                        codeblock.options.update(self.options)
+#                        yield codeblock
+#                    codeblock = CodeBlock(codeline.start_row)
             else:
                 codeblock.append(codeline)
             last_line_has_decorator = False
@@ -156,9 +177,11 @@ class CodeHasher(object):
             codeblock.options.update(self.options)
             yield codeblock
 
-    def yieldcodelines(self):
+    def itercodelines(self):
+        """ Returns a generator on the logical lines of this code.
+        """
         codeline = CodeLine(0)
-        for token in self.yieldtokens():
+        for token in self.itertokens():
             codeline.append(token)
             if codeline.complete:
                 yield codeline
@@ -166,10 +189,14 @@ class CodeHasher(object):
         if codeline.string:
             yield codeline
 
-    def yieldtokens(self):
+    def itertokens(self):
+        """ Returns a generator on the tokens of this code.
+        """
         for token_desc in tokenize.generate_tokens(self.xreadlines.next):
             yield Token(token_desc)
 
 
-iterblocks = lambda xreadlines: CodeHasher(xreadlines).yieldcodeblocks()
+iterblocks = lambda xreadlines: CodeHasher(xreadlines).itercodeblocks()
+
+
 
