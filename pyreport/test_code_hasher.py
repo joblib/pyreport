@@ -14,6 +14,8 @@ def line_signature(line_object):
 
 def line_list_signature(line_list):
     signature = [line_signature(line) for line in line_list]
+    # This is unfortunately required because of a change in the token
+    # module between python 2.4 and python 2.5
     if signature[-1][0] == '':
         signature.pop()
     return signature
@@ -26,7 +28,7 @@ class TestCodeLines(unittest.TestCase):
 
     def check_signature(self, in_string, signature):
         H = C.CodeHasher(C.xreadlines(in_string))
-        code_line_list = [l for l in H.yieldcodelines()]
+        code_line_list = [l for l in H.itercodelines()]
         signature2 = line_list_signature(code_line_list)
         self.assertEqual(signature, signature2)
 
@@ -38,9 +40,11 @@ class TestCodeLines(unittest.TestCase):
                     {})])
 
     def test_options(self):
-        self.check_signature('a\n#pyreport -n\n', 
-                        [('a\n', 1, {}), ('#pyreport -n\n', 2, {})])
+        self.check_signature('a\n#pyreport -n\na', 
+                        [('a\n', 1, {}), ('#pyreport -n\na\n', 3, {})])
 
+
+load_test(TestCodeLines)
 
 ########################################################################
 # Test the separation in code blocks

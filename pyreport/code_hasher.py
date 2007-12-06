@@ -87,7 +87,6 @@ class CodeLine(object):
                     and token.content[:10] == "#pyreport " ):
             self.options.update(parse_options(line[10:].split(" "))[0])
 
-
     def isnewblock(self):
         """ This functions checks if the code line start a new block.
         """
@@ -97,7 +96,8 @@ class CodeLine(object):
             return True        
 
     def __repr__(self):
-        return repr(self.string)
+        return('<CodeLine object, id %i, line %i, %s>'
+                    % (id(self), self.start_row, repr(self.string) ) )
 
 
 ##############################################################################

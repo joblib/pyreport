@@ -6,13 +6,14 @@ import options
 import unittest, doctest
 import pydoc
 from cStringIO import StringIO as S
-from test_code_hasher import xreadlines
+from code_hasher import xreadlines
 
 testsuite = unittest.TestSuite()
 testloader = unittest.TestLoader()
 load_test = lambda t: testsuite.addTest(
                testloader.loadTestsFromTestCase(t))
 
+##############################################################################
 class TestOptionParsing(unittest.TestCase):
 
     def test_parse_options(self):
@@ -23,6 +24,7 @@ class TestOptionParsing(unittest.TestCase):
 
 load_test(TestOptionParsing)
 
+##############################################################################
 class TestRstCompiler(unittest.TestCase):
 
     def test_check_rst_block(self):
@@ -33,6 +35,7 @@ class TestRstCompiler(unittest.TestCase):
 
 load_test(TestRstCompiler)
 
+##############################################################################
 class TestMain(unittest.TestCase):
 
     def setUp(self):
@@ -55,13 +58,14 @@ class TestMain(unittest.TestCase):
 load_test(TestMain)
 
 # Add the sub module tests
-testsuite.addTest(
-               testloader.loadTestsFromName('test_code_hasher'))
+testsuite.addTest( testloader.loadTestsFromName('test_code_hasher'))
 
 
 # Now add the doctest tests:
 testsuite.addTest(doctest.DocTestSuite(pyreport))
 testsuite.addTest(doctest.DocTestSuite(options))
+
+##############################################################################
 
 runner = unittest.TextTestRunner()
 
