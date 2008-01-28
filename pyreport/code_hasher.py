@@ -90,7 +90,9 @@ class CodeLine(object):
     def isnewblock(self):
         """ This functions checks if the code line start a new block.
         """
-        if re.match(r"\n*(elif|else|finally|except| |\t|#)", self.string):
+        # First get read of the leading empty lines:
+        string = re.sub(r"\A([\t ]*\n)*", "", self.string)
+        if re.match(r"elif|else|finally|except| |\t|#", string):
             return False
         else:
             return True        

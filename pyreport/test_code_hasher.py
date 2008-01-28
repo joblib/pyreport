@@ -99,6 +99,44 @@ if 1:
     def test_decorator(self):
         self.is_single_block("@staticmethod\ndef foo():\n foo")
 
+    def test_double_function(self):
+        string = """
+def f():
+    pass
+
+def g():
+    pass
+"""
+        blocks = list(C.iterblocks(C.xreadlines(string)))
+        # This should be made of three blocks, the last one of them
+        # empty.
+        self.assertEqual(len(blocks), 3)
+
+    def test_double_function_tabs(self):
+        string = """
+def f():
+\tpass
+
+def g():
+\tpass
+"""
+        blocks = list(C.iterblocks(C.xreadlines(string)))
+        # This should be made of three blocks, the last one of them
+        # empty.
+        self.assertEqual(len(blocks), 3)
+
+    def test_double_function_non_empty_line(self):
+        string = """
+def f():
+\tpass
+\t
+def g():
+\tpass
+"""
+        blocks = list(C.iterblocks(C.xreadlines(string)))
+        # This should be made of three blocks, the last one of them
+        # empty.
+        self.assertEqual(len(blocks), 3)
 
 load_test(TestIterBlock)
 
