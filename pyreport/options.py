@@ -1,23 +1,26 @@
 """
-This files is where all the options related code is.
+This files is where all the options-related code is.
 """
 
+# Standard library imports
 import copy
 import os
+from optparse import OptionParser
 
-#FIXME: This should be change to allow injection of __version__ from the main 
-# pyreport.py file.
-__version__ = "nononon"
+# Local imports
+from version import __version__
 
 def silent_execute( string):
-    """ Execute the given shell adding > /dev/null if under a posix OS and 
-    > nul under windows ( scew microsoft !)"""
+    """ Execute the given shell adding '> /dev/null' if under a posix OS 
+        and '> nul' under windows.
+    """
     return os.system(string + " > " + os.devnull)
+
 
 def verbose_execute(string):
     """ Execute getting errors """
     if os.system(string) != 0:
-        raise RuntimeError('Unable to execute %r'%string)
+        raise RuntimeError('Unable to execute %r' % string)
 
 # A dictionary describing the supported output type (as the keys of the
 # dictionnary) and the figure type allowed for each.
@@ -50,7 +53,6 @@ else:
     HAVE_PDFLATEX = False
 
 # Build a parser object
-from optparse import OptionParser as _OptionParser
 usage = """usage: %prog [options] pythonfile
 
 Processes a python script and pretty prints the results using LateX. If 
@@ -61,66 +63,69 @@ and pretty printed accordingly in the pdf.
     By Gael Varoquaux"""
 
 # Defaults are put to None and False in order to be able to track the changes.
-_parser = _OptionParser(usage=usage, version="%prog " +__version__ )
-_parser.add_option("-o", "--outfile", dest="outfilename",
+option_parser = OptionParser(usage=usage, version="%prog " +__version__ )
+
+option_parser.add_option("-o", "--outfile", dest="outfilename",
                 help="write report to FILE", metavar="FILE")
-_parser.add_option("-x", "--noexecute",
+option_parser.add_option("-x", "--noexecute",
                 action="store_true", dest="noexecute", default=False,
                 help="do not run the code, just extract the literate comments")
-_parser.add_option("-n", "--nocode",
+option_parser.add_option("-n", "--nocode",
                 dest="nocode", action="store_true", default=False,
                 help="do not display the source code")
-_parser.add_option("-d", "--double",
+option_parser.add_option("-d", "--double",
                 dest="double", action="store_true", default=False,
-                help="compile to two columns per page (only for pdf or tex output)")
-_parser.add_option("-t", "--type", metavar="TYPE",
+                help="compile to two columns per page "
+                     "(only for pdf or tex output)")
+option_parser.add_option("-t", "--type", metavar="TYPE",
                 action="store", type="string", dest="outtype",
                 default=None,
                 help="output to TYPE, TYPE can be " + ", ".join(allowed_types.keys()))
-_parser.add_option("-f", "--figuretype", metavar="TYPE",
+option_parser.add_option("-f", "--figuretype", metavar="TYPE",
                 action="store", type="string", dest="figuretype",
                 default=None,
                 help="output figure type TYPE  (TYPE can be of %s depending on report output type)" % (", ".join(reduce(lambda x, y : set(x).union(y) , allowed_types.values()) )) )
-_parser.add_option("-c", "--commentchar",
+option_parser.add_option("-c", "--commentchar",
                 action="store", dest="commentchar", default="!",
                 metavar="CHAR",
                 help='literate comments start with "#CHAR" ')
-_parser.add_option("-l", "--latexliterals",
+option_parser.add_option("-l", "--latexliterals",
                 action="store_true", dest="latexliterals",
                 default=False,
                 help='allow LaTeX literal comment lines starting with "#$" ')
-_parser.add_option("-e", "--latexescapes",
+option_parser.add_option("-e", "--latexescapes",
                 action="store_true", dest="latexescapes",
                 default=False,
                 help='allow LaTeX math mode escape in code wih dollar signs ')
-_parser.add_option("-p", "--nopyreport",
+option_parser.add_option("-p", "--nopyreport",
                 action="store_true", dest="nopyreport", default=False,
-                help="disallow the use of #pyreport lines in the processed file to specify options")
-_parser.add_option("-q", "--quiet",
+                help="disallow the use of #pyreport lines in the processed "
+                     "file to specify options")
+option_parser.add_option("-q", "--quiet",
                 action="store_true", dest="quiet", default=False,
                 help="don't print status messages to stderr")
-_parser.add_option("-v", "--verbose",
+option_parser.add_option("-v", "--verbose",
                 action="store_true", dest="verbose", default=False,
                 help="print all the message, including tex messages")
-_parser.add_option("-s", "--silent",
+option_parser.add_option("-s", "--silent",
                 dest="silent",action="store_true",
                 default=False,
                 help="""Suppress the display of warning and errors in the report""")
-_parser.add_option( "--noecho",
+option_parser.add_option( "--noecho",
                 dest="noecho",action="store_true",
                 default=False,
                 help="""Turns off the echoing of the output of the script on the standard out""")
-_parser.add_option("-a", "--arguments",
+option_parser.add_option("-a", "--arguments",
                 action="store", dest="arguments",
                 default=None, type="string", metavar="ARGS",
                 help='pass the arguments "ARGS" to the script')
 
 # Create default options
-default_options, _not_used = _parser.parse_args(args =[])
+default_options, _not_used = option_parser.parse_args(args =[])
 default_options._update_loose({
-        'infilename': None,
-        'outfile': None,
-    })
+                                   'infilename': None,
+                                   'outfile': None,
+                               })
 
 def parse_options(arguments, initial_options=copy.copy(default_options), 
                                     allowed_types=allowed_types):
@@ -132,7 +137,7 @@ def parse_options(arguments, initial_options=copy.copy(default_options),
     >>> parse_options(['-o','foo.ps','-s',])
     ({'outfilename': 'foo', 'outtype': 'ps', 'silent': True}, [])
     """
-    (options, args) = _parser.parse_args(args=arguments)
+    (options, args) = option_parser.parse_args(args=arguments)
     if (options.outtype == None and 
             options.outfilename and 
             '.' in options.outfilename) :

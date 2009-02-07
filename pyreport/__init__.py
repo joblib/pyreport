@@ -22,6 +22,6 @@ calculations with colleagues.
 
 __author__   = 'Gael Varoquaux'
 __license__  = 'BSD'
-__version__  = '0.3.0'
 __revision__ = "$Revision: $"
 
+from version import __version__

@@ -1,39 +1,31 @@
-#!/usr/bin/env python
-# Small script to unit test pyreport !! One day this soft will be rock solid.
-import pyreport
-import options
+"""
+Unit tests for pyreports main functionnality.
+"""
 
-import unittest, doctest
+# Standard library imports
 import pydoc
 from cStringIO import StringIO as S
-from code_hasher import xreadlines
+import unittest
 
-testsuite = unittest.TestSuite()
-testloader = unittest.TestLoader()
-load_test = lambda t: testsuite.addTest(
-               testloader.loadTestsFromTestCase(t))
+from nose.tools import assert_equal
 
-##############################################################################
-class TestOptionParsing(unittest.TestCase):
-
-    def test_parse_options(self):
-        self.assertEqual( pyreport.parse_options([]), ({}, []) )
-        self.assertEqual( pyreport.parse_options(['foo']), ({}, ['foo']) )
-        self.assertEqual( pyreport.parse_options(['-t','foo']), 
-                                ({'outtype': 'foo'}, []) )
-
-load_test(TestOptionParsing)
+from pyreport import pyreport
+from pyreport.code_hasher import xreadlines
 
 ##############################################################################
-class TestRstCompiler(unittest.TestCase):
+def test_parse_options():
+    assert_equal(pyreport.parse_options([]), ({}, []) )
+    assert_equal(pyreport.parse_options(['foo']), ({}, ['foo']) )
+    assert_equal(pyreport.parse_options(['-t','foo']), 
+                            ({'outtype': 'foo'}, []) )
 
-    def test_check_rst_block(self):
-        self.assertEqual(pyreport.check_rst_block(['textBlock','foo']),
-                            ['rstBlock', 'foo'])
-        self.assertEqual(pyreport.check_rst_block(['textBlock','*fo**o']),
-                            ['textBlock', '*fo**o'])
 
-load_test(TestRstCompiler)
+##############################################################################
+def test_check_rst_block():
+    assert_equal(pyreport.check_rst_block(['textBlock','foo']),
+                       ['rstBlock', 'foo'])
+    assert_equal(pyreport.check_rst_block(['textBlock','*fo**o']),
+                        ['textBlock', '*fo**o'])
 
 ##############################################################################
 class TestMain(unittest.TestCase):
@@ -55,23 +47,11 @@ class TestMain(unittest.TestCase):
         self.assertEqual(self.outString.getvalue(),
             ".. header:: Compiled with pyreport\n\n\n::\n\n    print 'hello world'\n    \n\n.. class:: answer\n\n  ::\n\n    hello world\n    \n    \n\n")
 
-load_test(TestMain)
-
-# Add the sub module tests
-testsuite.addTest( testloader.loadTestsFromName('test_code_hasher'))
-
-
-# Now add the doctest tests:
-testsuite.addTest(doctest.DocTestSuite(pyreport))
-testsuite.addTest(doctest.DocTestSuite(options))
 
 ##############################################################################
-
-runner = unittest.TextTestRunner()
-
 def profile():
     """ Use hotshot to profile the calls to main """
-    import hotshot
+    import hotshot, cStringIO
     Prof = hotshot.Profile("pyreport.stats")
     outString=cStringIO.StringIO()
     Prof.runcall(pyreport.main,cStringIO.StringIO(""),
@@ -80,14 +60,16 @@ def profile():
     stats = hotshot.stats.load("pyreport.stats")
     stats.print_stats(50)
 
+
 def document():
     """ Use pydoc to generate documentation"""
     pydoc.writedoc('pyreport')
 
 
+##############################################################################
 if __name__ == '__main__':
-    #unittest.main()
-    runner.run(testsuite)
+    from nose import runmodule
+    runmodule()
     document()
     #profile()
    
