@@ -24,7 +24,7 @@ setup(name='pyreport',
       summary='generates notes from a python script',
       author=pyreport.__author__,
       author_email='gael.varoquaux@normalesup.org',
-      url='https://launchpad.net/pyreport',
+      url='http://gael-varoquaux.info/computers/pyreport/',
       description="""
 Pyreport makes notes out of a python script. It can run the script in a sandbox and capture its output. It allows for embedding RestructuredText or LaTeX comments in the code for literate programming and generates a report made of the literate comments, the code, pretty printed, and the output of the script (pyreport can capture pylab figures). This is useful for documentations, making tutorials, but also for sharing python-based calculations with colleagues.
 """,
