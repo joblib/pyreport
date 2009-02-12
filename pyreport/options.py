@@ -6,15 +6,20 @@ This files is where all the options-related code is.
 import copy
 import os
 from optparse import OptionParser
+import sys
 
 # Local imports
 from version import __version__
 
-def silent_execute( string):
+def silent_execute( string, return_stderr=True):
     """ Execute the given shell adding '> /dev/null' if under a posix OS 
         and '> nul' under windows.
     """
-    return os.system(string + " > " + os.devnull)
+    if sys.platform.startswith('win') or return_stderr:
+        return os.system(string + " > " + os.devnull)
+    else:
+        return os.system('%s >%s 2>%s' % (string, os.devnull,
+                                                    os.devnull))
 
 
 def verbose_execute(string):
@@ -41,7 +46,7 @@ if not silent_execute("latex --help"):
         "eps" : ("eps",),
     })
     # Why the hell does epstopdf return 65280 !!
-    if  silent_execute("epstopdf --help") in (0, 65280):
+    if  silent_execute("epstopdf --help", return_stderr=False) in (0, 65280):
         allowed_types.update({
             "pdf" : ("pdf",),
             "tex" : ("pdf", "eps","ps"),

@@ -68,7 +68,7 @@ def guess_names_and_types(options, allowed_types=allowed_types):
     # Find types for figures and output:
     if options.outtype is None:
         if options.figuretype:
-            for key in allowed_types:
+            for key in allowed_types.keys():
                 if not options.figuretype in allowed_types[key]:
                     allowed_types.pop(key)
         # FIXME: pdf should not be hard coded, but this should be the first 
