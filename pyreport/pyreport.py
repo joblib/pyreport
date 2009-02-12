@@ -80,7 +80,8 @@ def guess_names_and_types(options, allowed_types=allowed_types):
         else:
             options.outtype = "rst"
         if options.verbose:
-            print >> sys.stderr, "No output type specified, outputting to %s" % options.outtype
+            print >> sys.stderr, "No output type specified, outputting to %s" \
+                            % options.outtype
 
     if options.outtype in allowed_types:
         if options.figuretype is None:
@@ -244,10 +245,11 @@ class PylabShow(object):
                         os.path.basename(options.infilename))[0]
         else:
             self.basename =  "_pyreport_"
-        if options.figuretype == "pdf":
-            self.figure_extension = "eps"
-        else:
-            self.figure_extension = options.figuretype
+        # XXX: Use pylab's pdf output
+        #if options.figuretype == "pdf":
+        #    self.figure_extension = "eps"
+        #else:
+        self.figure_extension = options.figuretype
         
     def __call__(self):
         figure_name = '%s%d.%s' % ( self.basename,
@@ -1069,10 +1071,11 @@ class TexCompiler(ReportCompiler):
         tex_string = re.sub(r"\\begin{document}", 
                         protect(self.preamble) + r"\\begin{document}", tex_string)
         tex_string = re.sub(self.empty_listing, "", tex_string)
-        if options.figuretype == "pdf":
-            if options.verbose:
-                print >> sys.stderr, "Compiling figures"
-            self.figure_list = map(epstopdf, self.figure_list)
+        # XXX: no need to use epstopdf: we are now using MPL'pdf output
+        #if options.figuretype == "pdf":
+        #    if options.verbose:
+        #        print >> sys.stderr, "Compiling figures"
+        #    self.figure_list = map(epstopdf, self.figure_list)
         print >>fileobject, tex_string
 
 
