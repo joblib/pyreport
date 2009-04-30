@@ -25,8 +25,6 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 #          LaTeX
 from __future__ import division
 
-DEBUG = False 
-
 # Standard library import
 import sys
 import re
@@ -43,6 +41,8 @@ import __builtin__ # to override import ! :->
 # Local imports
 from options import parse_options, option_parser, allowed_types, \
         default_options, HAVE_PDFLATEX, verbose_execute, silent_execute
+
+DEBUG = False
 
 #------------------------ Initialisation and option parsing ------------------
 def guess_names_and_types(options, allowed_types=allowed_types):
@@ -317,7 +317,7 @@ def execute_block_list(block_list, options=copy.copy(default_options)):
                                                 None, None, ()] 
 
     output_list = map(execute_block, block_list)
-    
+  
     # python can have strange histerisis effect, with kwargs and passing by
     # reference. We need to reinitialise these to there defaults:
     execute_block.figure_list = ()
@@ -481,6 +481,7 @@ class PythonParser:
             self._KEYWORD: 'pykeyword',
             self._TEXT: 'pytext',
         }
+        self.pysrcid = 0;
 
 
     def __call__(self, raw):
@@ -500,7 +501,13 @@ class PythonParser:
         # parse the source and write it
         self.pos = 0
         text = cStringIO.StringIO(self.raw)
-        self.out.write('<div class="pysrc">')
+        self.out.write("<table width=100% cellpadding=0 cellspacing=0 " +
+                     """onclick="toggle_hidden('pysrc%d','toggle%d');"><tr>
+                        <td rowspan="3"> """ % (self.pysrcid, self.pysrcid) )
+        self.out.write("""<div class="pysrc" id="pysrc%dinv" style="display:
+                       none">...</div>"""% self.pysrcid)
+        self.out.write('<div class="pysrc" id="pysrc%d" style="display: block ">'% self.pysrcid)
+
         try:
             tokenize.tokenize(text.readline, self.format)
         except tokenize.TokenError, ex:
@@ -509,6 +516,23 @@ class PythonParser:
             print >> self.out, ("<h3>ERROR: %s</h3>%s" %
                 (msg, self.raw[self.lines[line]:]))
         self.out.write('</div>')
+        self.out.write('''
+                       </td> 
+                       <td colspan="2" class="collapse bracket"></td>
+                       </tr>
+                       <tr>
+                       <td class="bracketfill"></td>
+                       <td width=5px class="collapse"> 
+                           <div id="toggle%d">
+                           <small>.</small>
+                           </div>
+                       </td>
+                       </tr>
+                       <tr><td colspan="2" class="collapse bracket"></td>
+                       </tr>
+                       </table>
+                       ''' % (self.pysrcid))
+        self.pysrcid += 1
         return self.out.getvalue()
 
     def format(self, toktype, toktext, (srow, scol), (erow, ecol), line):
@@ -817,8 +841,8 @@ inline:%s
 
 class HtmlCompiler(ReportCompiler):
     figuretpl = r"""
-.. image:: %s.png
 
+.. image:: %s.png
 """
 
     textBlocktpl = r"""
@@ -853,7 +877,7 @@ class HtmlCompiler(ReportCompiler):
             margin-left: 6ex ;
             font-family: serif ;
             font-size: 100% ;
-            background-color: #ffffff ; 
+            background-color: #cccccc ; 
         }
         pre.text {
         }
@@ -883,10 +907,65 @@ class HtmlCompiler(ReportCompiler):
         .pyoperator { color:purple; font-weight: bold; }
         .pytext { color:black; }
         .pyerror { font-weight: bold; color: red; }
-            
+
+        .bracket {
+            height: 4px;
+            width: 10px;
+        }
+        .bracketfill {
+            width: 10px;
+            background-color: #FFFFFF; 
+        }
+        .collapse {
+            border: 0px; 
+            background-color: #99CCFF; 
+            padding: 0px;
+            font-size: xx-small;
+            text-align: right;
+        }
         </style>
+
+<!-- http://www.randomsnippets.com/2008/02/12/how-to-hide-and-show-your-div/ -->
+<script language="javascript"> 
+function toggle_hidden(showHideDiv, switchTextDiv) {
+    var ele = document.getElementById(showHideDiv);
+    var eleinv = document.getElementById(showHideDiv+'inv');
+    var text = document.getElementById(switchTextDiv);
+    if(ele.style.display == "block") {
+        ele.style.display = "none";
+        eleinv.style.display = "block";
+        text.innerHTML = "<small>+</small>";
+        }
+    else {
+        ele.style.display = "block";
+        eleinv.style.display = "none";
+        text.innerHTML = " <small>&nbsp;</small>" ;
+        }
+    } 
+
+function hide_all(contentDiv,controlDiv){
+    var text = document.getElementById('hideall');
+    if (contentDiv.constructor == Array) {
+        for(i=0; i < contentDiv.length; i++) {
+        toggle_hidden(contentDiv[i], controlDiv[i]);
+        }
+    }
+    else {
+        toggle_hidden(contentDiv, controlDiv);
+    }
+
+}
+</script>
         """
         html_string = re.sub(r"</style>", protect(cssextra), html_string)
+        hideall = r"""<body><div id="hideall" class="collapse"
+            onclick="hide_all("""
+        hideall += str( ['pysrc%d' % x for x in range(python2html.pysrcid)])
+        hideall += ","
+        hideall += str( ['toggle%d' % x for x in range(python2html.pysrcid)])
+        hideall += r""")">toggle all code blocks</div><br>
+        """
+        html_string = re.sub(r"<body>", protect(hideall), html_string)
         print >>fileobject, html_string
 
 
