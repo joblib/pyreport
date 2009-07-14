@@ -48,7 +48,9 @@ def test_options():
 
 def is_single_block(string):
     codeblock = ch.CodeBlock(0)
-    codeblock.string = ''.join(ch.xreadlines(string.expandtabs()))
+    codeblock.string = '\n'.join(s.rstrip(' ')
+                    for s in 
+                    ''.join(ch.xreadlines(string.expandtabs())).split('\n'))
     block_list = list( ch.iterblocks(ch.xreadlines(string)) )
     assert_equal(line_list_signature([codeblock]), 
                         line_list_signature(block_list))

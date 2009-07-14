@@ -165,9 +165,9 @@ class CodeHasher(object):
                 if line_start and line_start[0] == '@':
                         last_line_has_decorator = True
                         continue
-                line_end = codeline.string.rstrip(" \n")
 # FIXME: I don't understand the purpose of this code. Until I don't have
 # a test case that fail, I leave it commented out.
+#                line_end = codeline.string.rstrip(" \n")
 #                if line_end and line_end == ':' : 
 #                    if codeblock.string:
 #                        self.options.update(codeblock.options)
@@ -189,9 +189,13 @@ class CodeHasher(object):
         for token in self.itertokens():
             codeline.append(token)
             if codeline.complete:
+                codeline.string = '\n'.join(s.rstrip(' ') 
+                                    for s in codeline.string.split('\n'))
                 yield codeline
                 codeline = CodeLine(codeline.end_row + 1)
         if codeline.string:
+            codeline.string = '\n'.join(s.rstrip(' ') 
+                                    for s in codeline.string.split('\n'))
             yield codeline
 
     def itertokens(self):

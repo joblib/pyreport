@@ -23,7 +23,6 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 #      - some output to make man pages ?
 #      - Long, long term: use reportlab to avoid the dependencies on
 #          LaTeX
-from __future__ import division
 
 # Standard library import
 import sys
