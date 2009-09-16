@@ -5,5 +5,5 @@ This file is required only for loose coupling and avoiding import loops.
 # Copyright: Gael Varoquaux
 # License: BSD
 
-__version__ = "0.3.3"
+__version__ = "0.3.4a"
 
