@@ -28,7 +28,6 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 import sys
 import re
 import os
-import code_hasher
 # to treat StdIn, StdOut as files:
 import cStringIO
 from docutils import core as docCore
@@ -36,12 +35,16 @@ from docutils import io as docIO
 import copy
 from traceback import format_exc
 import __builtin__ # to override import ! :->
+import platform
+
 
 # Local imports
 from options import parse_options, option_parser, allowed_types, \
         default_options, HAVE_PDFLATEX, verbose_execute, silent_execute
+import code_hasher
 
 DEBUG = False
+PYTHON_VERSION = int(''.join(platform.python_version_tuple()[:2]))
 
 #------------------------ Initialisation and option parsing ------------------
 def guess_names_and_types(options, allowed_types=allowed_types):
@@ -270,10 +273,20 @@ class MyImport(object):
     def __init__(self, options):
         self.options = options
     
+    
     def __call__(self, name, globals=None, locals=None, fromlist=None):
         if name == "pylab":
             return self.pylab_import(name, globals, locals, fromlist)
         return self.original_import(name, globals, locals, fromlist)
+
+    if PYTHON_VERSION >= 26:
+        def __call__(self, name, globals=None, locals=None,
+                        fromlist=None, level=-1):
+            if name == "pylab":
+                return self.pylab_import(name, globals, locals, fromlist,
+                        level=level)
+            return self.original_import(name, globals, locals, fromlist,
+                        level=level)
     
     
     def pylab_import(self, name, globals=None, locals=None,
