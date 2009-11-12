@@ -290,7 +290,7 @@ class MyImport(object):
     
     
     def pylab_import(self, name, globals=None, locals=None,
-                                fromlist=None):
+                     fromlist=None, level=-1):
         matplotlib = self.original_import("matplotlib")
         matplotlib.interactive(False)
         # FIXME: Still no good solution to plot without X. The following
@@ -392,7 +392,21 @@ def py2commentblocks(string, firstlinenum, options):
     current_block = ""
     newline = True
     linenum = 0
+    last_token = None
     for tokendesc in tokenize.generate_tokens(input_stream.readline):
+
+        if PYTHON_VERSION >= 26:
+            # As of 2.6, tokenize.generate_tokens() chops newlines off
+            # then end of comments and returns them as NL tokens. This
+            # confuses the logic of the rest of pyreport, so we gobble
+            # NL following a comment.
+            if last_token == tokenize.COMMENT and \
+                    tokendesc[0] == tokenize.NL:
+                last_token = tokendesc[0]
+                continue
+            else:
+                last_token = tokendesc[0]
+
         tokentype = token.tok_name[tokendesc[0]]
         startpos = tokendesc[2][1]
         tokencontent = tokendesc[1]

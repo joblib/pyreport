@@ -7,8 +7,11 @@ import token
 import tokenize
 import re
 import StringIO
+import platform
 
 from options import parse_options
+
+PYTHON_VERSION = int(''.join(platform.python_version_tuple()[:2]))
 
 def xreadlines(s):
     """ Helper function to use a string in the code hasher:
@@ -201,8 +204,30 @@ class CodeHasher(object):
     def itertokens(self):
         """ Returns a generator on the tokens of this code.
         """
+        last_token = None
         for token_desc in tokenize.generate_tokens(self.next_line_generator):
-            yield Token(token_desc)
+
+            if PYTHON_VERSION < 26:
+                yield Token(token_desc)
+            else:
+                # As of 2.6, tokenize.generate_tokens() chops newlines off
+                # then end of comments and returns them as NL tokens. This
+                # confuses the logic of the rest of pyreport, so we append
+                # missing \n to COMMENT tokens, and gobble NL following a
+                # comment.
+                if token_desc[0] == tokenize.NL and \
+                        last_token == tokenize.COMMENT:
+                    last_token = token_desc[0]
+                    continue
+                else:
+                    if token_desc[0] == tokenize.COMMENT \
+                            and token_desc[1][-1] != '\n':
+                        new_td = (token_desc[0], token_desc[1]+'\n', 
+                                  token_desc[2], token_desc[3], token_desc[4])
+                        token_desc = new_td
+
+                    last_token = token_desc[0]
+                    yield Token(token_desc)
 
 
 iterblocks = lambda xreadlines: CodeHasher(xreadlines).itercodeblocks()
