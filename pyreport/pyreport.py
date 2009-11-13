@@ -44,7 +44,8 @@ from options import parse_options, option_parser, allowed_types, \
 import code_hasher
 
 DEBUG = False
-PYTHON_VERSION = int(''.join(platform.python_version_tuple()[:2]))
+PYTHON_VERSION = int(''.join(str(s) for s in
+                            platform.python_version_tuple()[:2]))
 
 #------------------------ Initialisation and option parsing ------------------
 def guess_names_and_types(options, allowed_types=allowed_types):
@@ -274,10 +275,13 @@ class MyImport(object):
         self.options = options
     
     
-    def __call__(self, name, globals=None, locals=None, fromlist=None):
+    def __call__(self, name, globals=None, locals=None, fromlist=None, 
+                    **kwargs):
         if name == "pylab":
-            return self.pylab_import(name, globals, locals, fromlist)
-        return self.original_import(name, globals, locals, fromlist)
+            return self.pylab_import(name, globals, locals, fromlist,
+                        **kwargs)
+        return self.original_import(name, globals, locals, fromlist,
+                        **kwargs)
 
     if PYTHON_VERSION >= 26:
         def __call__(self, name, globals=None, locals=None,

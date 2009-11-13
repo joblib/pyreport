@@ -11,7 +11,8 @@ import platform
 
 from options import parse_options
 
-PYTHON_VERSION = int(''.join(platform.python_version_tuple()[:2]))
+PYTHON_VERSION = int(''.join(str(s) for s in 
+                            platform.python_version_tuple()[:2]))
 
 def xreadlines(s):
     """ Helper function to use a string in the code hasher:
@@ -88,14 +89,14 @@ class CodeLine(object):
         if ( token.type == 'COMMENT' 
                     and token_started_new_line 
                     and token.content[:10] == "#pyreport " ):
-            self.options.update(parse_options(line[10:].split(" "))[0])
+            self.options.update(parse_options(self.string[10:].split(" "))[0])
 
     def isnewblock(self):
         """ This functions checks if the code line start a new block.
         """
         # First get read of the leading empty lines:
         string = re.sub(r"\A([\t ]*\n)*", "", self.string)
-        if re.match(r"elif|else|finally|except| |\t|#", string):
+        if re.match(r"elif|else|finally|except| |\t", string):
             return False
         else:
             return True        
