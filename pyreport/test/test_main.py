@@ -9,23 +9,18 @@ import unittest
 
 from nose.tools import assert_equal
 
-from pyreport import pyreport
+from pyreport import main
 from pyreport.code_hasher import xreadlines
-
-##############################################################################
-def test_parse_options():
-    assert_equal(pyreport.parse_options([]), ({}, []) )
-    assert_equal(pyreport.parse_options(['foo']), ({}, ['foo']) )
-    assert_equal(pyreport.parse_options(['-t','foo']), 
-                            ({'outtype': 'foo'}, []) )
 
 
 ##############################################################################
 def test_check_rst_block():
-    assert_equal(pyreport.check_rst_block(['textBlock','foo']),
+    assert_equal(main.check_rst_block(['textBlock','foo']),
                        ['rstBlock', 'foo'])
-    assert_equal(pyreport.check_rst_block(['textBlock','*fo**o']),
+    assert_equal(main.check_rst_block(['textBlock','*fo**o']),
                         ['textBlock', '*fo**o'])
+
+
 
 ##############################################################################
 class TestMain(unittest.TestCase):
@@ -34,14 +29,14 @@ class TestMain(unittest.TestCase):
         self.outString = S()
 
     def test_empty_file(self):
-        pyreport.main(xreadlines(""), 
+        main.main(xreadlines(""), 
                 overrides={'outfile':self.outString, 'outtype':'rst',
                             'quiet':True}),
         self.assertEqual(self.outString.getvalue(),
                 '.. header:: Compiled with pyreport\n\n\n\n')
 
     def test_hello_world(self):
-        pyreport.main(xreadlines("print 'hello world'"), 
+        main.main(xreadlines("print 'hello world'"), 
                 overrides={'outfile':self.outString, 'outtype':'rst',
                             'quiet':True, 'noecho':True }),
         self.assertEqual(self.outString.getvalue(),
@@ -54,7 +49,7 @@ def profile():
     import hotshot, cStringIO
     Prof = hotshot.Profile("pyreport.stats")
     outString=cStringIO.StringIO()
-    Prof.runcall(pyreport.main,cStringIO.StringIO(""),
+    Prof.runcall(main.main,cStringIO.StringIO(""),
                     overrides={'outfile':outString, 'outtype':'rst'})
     import hotshot.stats
     stats = hotshot.stats.load("pyreport.stats")
