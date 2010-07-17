@@ -25,7 +25,7 @@ comments (literate comments) embedded in the code in a pdf (or html, or rst...)
 #          LaTeX
 from __future__ import division
 
-DEBUG = True
+DEBUG = False
 __revision__ = "$Revision: $"
 __version__ = "0.3.0"
 
